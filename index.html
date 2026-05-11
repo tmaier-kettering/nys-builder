@@ -204,13 +204,24 @@
         }
       }
 
-      async function loadSvgAsPngBytes(path, width, height) {
-        const response = await fetch(path);
-        if (!response.ok) {
-          throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
+      async function fetchAssetText(path) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) {
+            throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
+          }
+          return await response.text();
+        } catch (error) {
+          const modeHint =
+            window.location.protocol === 'file:'
+              ? ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)'
+              : '';
+          throw new Error(`Failed to load ${path}: ${error.message}${modeHint}`);
         }
+      }
 
-        const svgText = await response.text();
+      async function loadSvgAsPngBytes(path, width, height) {
+        const svgText = await fetchAssetText(path);
         const blob = new Blob([svgText], { type: 'image/svg+xml' });
         const objectUrl = URL.createObjectURL(blob);
 
@@ -475,7 +486,7 @@
             const coverSource = await PDFDocument.load(coverPdfBytes);
             const [coverPage] = await pdfDoc.copyPages(coverSource, [0]);
             pdfDoc.addPage(coverPage);
-          } catch (_error) {
+          } catch {
             const fallbackCover = pdfDoc.addPage([pageWidth, pageHeight]);
             fallbackCover.drawText('NYS Builder Policy Explorer', {
               x: PDF_PAGE_MARGIN,
@@ -499,7 +510,7 @@
             const logoScale = Math.min(1, PDF_LOGO_MAX_WIDTH / logoImage.width);
             logoWidth = logoImage.width * logoScale;
             logoHeight = logoImage.height * logoScale;
-          } catch (_error) {
+          } catch {
             logoImage = null;
           }
 
@@ -511,7 +522,7 @@
               pageHeight
             );
             tocBackground = await pdfDoc.embedPng(tocBackgroundBytes);
-          } catch (_error) {
+          } catch {
             tocBackground = null;
           }
 
