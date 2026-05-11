@@ -233,7 +233,11 @@
         visiblePolicyIds: [],
         onlySelectedFromLink: false
       };
+      const ACTION_ID_PATTERN = /^A\d+/i;
+      const POLICY_ID_PATTERN = /^P\d+/i;
+      const PRINT_CLOSE_DELAY_MS = 150;
 
+      // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
       function parseCsv(text) {
         const rows = [];
         let cur = '';
@@ -293,7 +297,7 @@
           .replaceAll("'", '&#39;');
       }
 
-      function optionValues(values) {
+      function buildFilterOptions(values) {
         return ['All', ...new Set(values.filter(Boolean).sort((a, b) => a.localeCompare(b)))];
       }
 
@@ -450,10 +454,10 @@
         if (navigator.clipboard?.writeText) {
           navigator.clipboard.writeText(link).then(
             () => alert('Share link copied to clipboard.'),
-            () => prompt('Copy this share link:', link)
+            () => prompt('Clipboard unavailable - copy this share link manually:', link)
           );
         } else {
-          prompt('Copy this share link:', link);
+          prompt('Clipboard unavailable - copy this share link manually:', link);
         }
       }
 
@@ -471,7 +475,6 @@
         }
 
         const grouped = buildGroups(selectedPolicies);
-        const PRINT_CLOSE_DELAY_MS = 150;
 
         const html = `
           <html>
@@ -521,6 +524,7 @@
               <script>
                 window.onload = () => {
                   window.print();
+                  // Keep the popup open briefly so the print dialog can initialize.
                   setTimeout(() => window.close(), ${PRINT_CLOSE_DELAY_MS});
                 };
               </script>
@@ -575,8 +579,8 @@
         const [actionsRes, policiesRes] = await Promise.all([fetch('./actions.csv'), fetch('./policies.csv')]);
         const [actionsText, policiesText] = await Promise.all([actionsRes.text(), policiesRes.text()]);
 
-        const actionRows = parseCsv(actionsText).filter((row) => /^A\d+/i.test(row[0] || ''));
-        const policyRows = parseCsv(policiesText).filter((row) => /^P\d+/i.test(row[0] || ''));
+        const actionRows = parseCsv(actionsText).filter((row) => ACTION_ID_PATTERN.test(row[0] || ''));
+        const policyRows = parseCsv(policiesText).filter((row) => POLICY_ID_PATTERN.test(row[0] || ''));
 
         state.actionsById = new Map(actionRows.map((row) => [row[0], row[1] || 'Untitled Action']));
         state.policies = policyRows.map((row) => ({
@@ -589,11 +593,11 @@
           actionIds: splitMulti(row[6])
         }));
 
-        setSelectOptions(els.filterScope, optionValues(state.policies.map((p) => p.scope)));
-        setSelectOptions(els.filterType, optionValues(state.policies.map((p) => p.type)));
+        setSelectOptions(els.filterScope, buildFilterOptions(state.policies.map((p) => p.scope)));
+        setSelectOptions(els.filterType, buildFilterOptions(state.policies.map((p) => p.type)));
         setSelectOptions(
           els.filterIssueArea,
-          optionValues(state.policies.flatMap((p) => p.issueAreas))
+          buildFilterOptions(state.policies.flatMap((p) => p.issueAreas))
         );
 
         els.groupBy.value = 'scope';
