@@ -308,10 +308,10 @@ footer {
   *,
   *::before,
   *::after {
-    animation-duration: 0s !important;
-    animation-iteration-count: 1 !important;
-    animation-delay: 0s !important;
-    transition-duration: 0s !important;
-    scroll-behavior: auto !important;
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+    animation-delay: 0s;
+    transition-duration: 0s;
+    scroll-behavior: auto;
   }
 }
