@@ -76,7 +76,7 @@ function cardHtml(policy) {
   const showDeepDive = state.viewLevel === 'deep-dive';
 
   const actionTitles = splitCsvList(policy.actions)
-    .map((actionId) => state.actionsById.get(actionId)?.title || actionId)
+    .map((actionId) => state.actionsById.get(actionId)?.title || `Unknown Action (${actionId})`)
     .filter(Boolean)
     .join('; ');
 
@@ -272,7 +272,7 @@ function policyTextForPdf(policy) {
 
   if (state.viewLevel === 'deep-dive') {
     const titles = splitCsvList(policy.actions)
-      .map((actionId) => state.actionsById.get(actionId)?.title || actionId)
+      .map((actionId) => state.actionsById.get(actionId)?.title || `Unknown Action (${actionId})`)
       .filter(Boolean)
       .join('; ');
     lines.push(`Related Action Titles: ${titles || '—'}`);

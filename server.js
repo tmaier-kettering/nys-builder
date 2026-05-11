@@ -100,6 +100,15 @@ function loadData() {
   return { actions, policies };
 }
 
+let cachedData = null;
+
+try {
+  cachedData = loadData();
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.error('Failed to read or parse CSV files at startup.', error);
+}
+
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
@@ -151,14 +160,11 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || `localhost:${PORT}`}`);
 
   if (parsedUrl.pathname === '/api/data') {
-    try {
-      const data = loadData();
-      sendJson(res, 200, data);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to read or parse CSV files.', error);
+    if (!cachedData) {
       sendJson(res, 500, { error: 'Failed to read or parse CSV files.' });
+      return;
     }
+    sendJson(res, 200, cachedData);
     return;
   }
 
