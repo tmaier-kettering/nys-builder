@@ -516,10 +516,10 @@
           writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`, { spacingAfter: 6 });
 
           grouped.forEach(([title, policies]) => {
+            ensureSpace(PDF_LINE_HEIGHT * 3);
             if (!groupStartPages.has(title)) {
-              groupStartPages.set(title, pdfDoc.getPageCount());
+              groupStartPages.set(title, pdfDoc.getPageCount() - 1);
             }
-
             writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
 
             policies.forEach((policy) => {
@@ -546,7 +546,8 @@
           });
 
           let tocCursorY = pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE - 28;
-          grouped.forEach(([title]) => {
+          let tocTruncated = false;
+          for (const [title] of grouped) {
             const entry = `${title}`;
             const pageNumber = groupStartPages.get(title);
             const numberLabel = String(pageNumber || '-');
@@ -556,7 +557,8 @@
 
             const blockHeight = Math.max(entryLines.length, 1) * PDF_LINE_HEIGHT + 4;
             if (tocCursorY - blockHeight < PDF_CONTENT_BOTTOM_MARGIN) {
-              return;
+              tocTruncated = true;
+              break;
             }
 
             entryLines.forEach((line, index) => {
@@ -581,16 +583,25 @@
               tocCursorY -= PDF_LINE_HEIGHT;
             });
             tocCursorY -= 4;
-          });
+          }
+
+          if (tocTruncated) {
+            tocPage.drawText('Additional sections omitted from this page.', {
+              x: PDF_PAGE_MARGIN,
+              y: PDF_CONTENT_BOTTOM_MARGIN - 12,
+              size: 10,
+              font: helvetica,
+              color: rgb(0.08, 0.2, 0.4)
+            });
+          }
 
           const pages = pdfDoc.getPages();
-          const totalPages = pages.length;
           pages.forEach((pdfPage, index) => {
             if (index === 0) {
               return;
             }
 
-            const pageNumberLabel = String(index + 1);
+            const pageNumberLabel = String(index);
             const pageNumberWidth = helvetica.widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
             pdfPage.drawImage(logoImage, {
               x: PDF_PAGE_MARGIN,
