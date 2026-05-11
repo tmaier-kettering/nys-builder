@@ -522,7 +522,7 @@
           grouped.forEach(([title, policies]) => {
             ensureSpace(PDF_LINE_HEIGHT * 3);
             if (!groupStartPages.has(title)) {
-              groupStartPages.set(title, pdfDoc.getPageCount());
+              groupStartPages.set(title, pdfDoc.getPageCount() - 2);
             }
             writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
 
@@ -600,11 +600,11 @@
 
           const pages = pdfDoc.getPages();
           pages.forEach((pdfPage, index) => {
-            if (index === 0) {
+            if (index < 2) {
               return;
             }
 
-            const pageNumberLabel = String(index + 1);
+            const pageNumberLabel = String(index - 1);
             const pageNumberWidth = helvetica.widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
             pdfPage.drawImage(logoImage, {
               x: PDF_PAGE_MARGIN,
