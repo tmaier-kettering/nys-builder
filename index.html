@@ -632,7 +632,10 @@
       }
 
       load().catch((err) => {
-        els.policyGroups.innerHTML = `<p class="muted">Unable to load CSV files: ${err.message}</p>`;
+        const errorEl = document.createElement('p');
+        errorEl.className = 'muted';
+        errorEl.textContent = `Unable to load CSV files: ${err.message}`;
+        els.policyGroups.replaceChildren(errorEl);
       });
     </script>
   </body>
