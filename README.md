@@ -5,6 +5,8 @@ This repository contains a static single-page website that displays policy recom
 ## Files
 
 - `index.html` – UI, rendering logic, filters, grouping, selection, sharing, and PDF export.
+- `theme.css` – design tokens and color palette variables for easy visual customization.
+- `styles.css` – main visual styles, layout, and UI animations.
 - `actions.csv` – source action dataset.
 - `policies.csv` – source policy dataset.
 - `data.js` – embedded CSV fallback used when browser fetch is unavailable (for example, opening `index.html` directly via `file://`).

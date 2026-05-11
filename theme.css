@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light;
+
+  /* Core typography */
+  --font-sans: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.5;
+
+  /* Color palette (primary tokens to customize) */
+  --color-bg: #f4f7fb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f8fbff;
+  --color-text: #10223a;
+  --color-text-muted: #4f6178;
+  --color-border: #d7e0eb;
+  --color-primary: #0e6eff;
+  --color-primary-strong: #0055d4;
+  --color-accent: #24b3a7;
+
+  /* Effects */
+  --shadow-soft: 0 8px 30px rgba(15, 23, 42, 0.07);
+  --shadow-hover: 0 16px 36px rgba(14, 110, 255, 0.14);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 140ms;
+  --duration-base: 260ms;
+  --duration-slow: 420ms;
+}
