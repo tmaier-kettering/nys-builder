@@ -470,14 +470,8 @@
           return;
         }
 
-        const grouped = buildGroups(
-          selectedPolicies.filter((policy) =>
-            state.onlySelectedFromLink ||
-            ((els.filterScope.value === 'All' || policy.scope === els.filterScope.value) &&
-              (els.filterType.value === 'All' || policy.type === els.filterType.value) &&
-              (els.filterIssueArea.value === 'All' || policy.issueAreas.includes(els.filterIssueArea.value)))
-          )
-        );
+        const grouped = buildGroups(selectedPolicies);
+        const PRINT_CLOSE_DELAY_MS = 150;
 
         const html = `
           <html>
@@ -527,7 +521,7 @@
               <script>
                 window.onload = () => {
                   window.print();
-                  setTimeout(() => window.close(), 150);
+                  setTimeout(() => window.close(), ${PRINT_CLOSE_DELAY_MS});
                 };
               </script>
             </body>
