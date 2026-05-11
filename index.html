@@ -63,7 +63,7 @@
       <footer>Built from policies.csv and actions.csv</footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="./data.js"></script>
     <script>
       const els = {
@@ -91,6 +91,21 @@
       const PDF_FILE_PREFIX = 'selected-policies';
       const PDF_PAGE_MARGIN = 40;
       const PDF_LINE_HEIGHT = 14;
+      const PDF_CONTENT_BOTTOM_MARGIN = 75;
+      const PDF_TOC_TITLE_SIZE = 22;
+      const PDF_FOOTER_TEXT_SIZE = 10;
+      const PDF_PAGE_WIDTH = 612;
+      const PDF_PAGE_HEIGHT = 792;
+      const PDF_FOOTER_LOGO_Y = 18;
+      const PDF_FOOTER_PAGE_NUMBER_Y = 24;
+      const PDF_LOGO_MAX_WIDTH = 90;
+      const PDF_ASSETS = {
+        coverPage: './assets/first_page.pdf',
+        tableOfContentsBackground: './assets/table_of_contents_background.svg',
+        logo: './assets/LCOY_USA_Logo.png'
+      };
+      const FILE_PROTOCOL_ASSET_HINT =
+        ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
       const fallbackData = window.NYS_BUILDER_FALLBACK_DATA || {};
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
@@ -173,6 +188,110 @@
 
       function buildFilterOptions(values) {
         return ['All', ...[...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))];
+      }
+
+      function getAssetFetchModeHint() {
+        return window.location.protocol === 'file:' ? FILE_PROTOCOL_ASSET_HINT : '';
+      }
+
+      async function fetchAssetBytes(path) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) {
+            throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
+          }
+          return new Uint8Array(await response.arrayBuffer());
+        } catch (error) {
+          throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
+        }
+      }
+
+      async function fetchAssetText(path) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) {
+            throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
+          }
+          return await response.text();
+        } catch (error) {
+          throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
+        }
+      }
+
+      async function loadSvgAsPngBytes(path, width, height) {
+        const svgText = await fetchAssetText(path);
+        const blob = new Blob([svgText], { type: 'image/svg+xml' });
+        const objectUrl = URL.createObjectURL(blob);
+
+        try {
+          const image = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Unable to decode SVG asset at ${path}`));
+            img.src = objectUrl;
+          });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.ceil(width);
+          canvas.height = Math.ceil(height);
+          const context = canvas.getContext('2d');
+          if (!context) {
+            throw new Error(
+              'Failed to create 2D canvas context for rendering the table-of-contents background. This may indicate a browser compatibility issue.'
+            );
+          }
+
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/png');
+          const base64 = dataUrl.split(',')[1] || '';
+          return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
+      }
+
+      function splitTextForPdf(text, font, fontSize, maxWidth) {
+        const value = formatPdfValue(text);
+        const result = [];
+        const paragraphs = value.split(/\r?\n/);
+
+        paragraphs.forEach((paragraph, paragraphIndex) => {
+          const words = paragraph.trim().split(/\s+/).filter(Boolean);
+
+          if (!words.length) {
+            result.push('');
+          } else {
+            let line = words[0];
+            for (let i = 1; i < words.length; i += 1) {
+              const candidate = `${line} ${words[i]}`;
+              if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+                line = candidate;
+              } else {
+                result.push(line);
+                line = words[i];
+              }
+            }
+            result.push(line);
+          }
+
+          if (paragraphIndex < paragraphs.length - 1 && result.length > 0 && result[result.length - 1] !== '') {
+            result.push('');
+          }
+        });
+
+        return result;
+      }
+
+      function downloadPdfBlob(bytes, filename) {
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
       }
 
       function setSelectOptions(selectEl, options) {
@@ -334,7 +453,7 @@
         }
       }
 
-      function downloadPdf() {
+      async function downloadPdf() {
         const selectedPolicies = state.policies.filter((policy) => state.selectedPolicyIds.has(policy.id));
         if (!selectedPolicies.length) {
           alert('Select at least one card first.');
@@ -342,73 +461,238 @@
         }
 
         const grouped = buildGroups(selectedPolicies);
-        const jsPdfCtor = window.jspdf?.jsPDF;
-        if (!jsPdfCtor) {
+        const pdfLib = window.PDFLib;
+        if (!pdfLib?.PDFDocument || !pdfLib?.StandardFonts || !pdfLib?.rgb) {
           alert('PDF download is temporarily unavailable. Please refresh and try again.');
           return;
         }
 
-        const doc = new jsPdfCtor({ unit: 'pt', format: 'letter' });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const textWidth = pageWidth - PDF_PAGE_MARGIN * 2;
-        let y = PDF_PAGE_MARGIN;
+        try {
+          const { PDFDocument, StandardFonts, rgb } = pdfLib;
+          const pdfDoc = await PDFDocument.create();
+          const pageWidth = PDF_PAGE_WIDTH;
+          const pageHeight = PDF_PAGE_HEIGHT;
+          const textWidth = pageWidth - PDF_PAGE_MARGIN * 2;
+          const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+          const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+          let logoImage = null;
+          let logoWidth = 0;
+          let logoHeight = 0;
 
-        const addPageIfNeeded = (requiredHeight = PDF_LINE_HEIGHT) => {
-          if (y + requiredHeight > pageHeight - PDF_PAGE_MARGIN) {
-            doc.addPage();
-            y = PDF_PAGE_MARGIN;
-          }
-        };
-
-        const writeWrapped = (text, options = {}) => {
-          const { font = 'normal', fontSize = 11, indent = 0 } = options;
-          const safeText = formatPdfValue(text);
-          doc.setFont('helvetica', font);
-          doc.setFontSize(fontSize);
-          const wrapped = doc.splitTextToSize(safeText, textWidth - indent);
-          addPageIfNeeded(wrapped.length * PDF_LINE_HEIGHT);
-          doc.text(wrapped, PDF_PAGE_MARGIN + indent, y);
-          y += wrapped.length * PDF_LINE_HEIGHT;
-        };
-
-        writeWrapped('Selected Policies', { font: 'bold', fontSize: 16 });
-        writeWrapped(`View mode: ${formatPdfValue(els.viewMode.value)}`);
-        writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`);
-        y += 6;
-
-        grouped.forEach(([title, policies]) => {
-          addPageIfNeeded(PDF_LINE_HEIGHT * 3);
-          writeWrapped(title, { font: 'bold', fontSize: 13 });
-          y += 4;
-
-          policies.forEach((policy) => {
-            const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
-            const showActions = els.viewMode.value === 'deep-dive';
-            const actionTitles = policy.actionIds.map(
-              (id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`
-            );
-            const fields = [
-              ['Policy', policy.policyText],
-              ['Scope', policy.scope],
-              ['Type', policy.type],
-              ['Issue Areas', policy.issueAreas.join(', ')],
-              ...(showCommentary ? [['Commentary', policy.commentary]] : []),
-              ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : [])
-            ];
-
-            addPageIfNeeded(PDF_LINE_HEIGHT * 2);
-            writeWrapped(formatPdfValue(policy.id), { font: 'bold', fontSize: 12 });
-
-            fields.forEach(([label, value]) => {
-              writeWrapped(`${label}: ${formatPdfValue(value)}`, { indent: 10 });
+          try {
+            const coverPdfBytes = await fetchAssetBytes(PDF_ASSETS.coverPage);
+            const coverSource = await PDFDocument.load(coverPdfBytes);
+            const [coverPage] = await pdfDoc.copyPages(coverSource, [0]);
+            pdfDoc.addPage(coverPage);
+          } catch (error) {
+            console.warn('Cover page asset failed to load. Using fallback cover page.', error);
+            const fallbackCover = pdfDoc.addPage([pageWidth, pageHeight]);
+            fallbackCover.drawText('NYS Builder Policy Explorer', {
+              x: PDF_PAGE_MARGIN,
+              y: pageHeight - PDF_PAGE_MARGIN - 40,
+              size: 26,
+              font: helveticaBold,
+              color: rgb(0.08, 0.2, 0.4)
             });
+            fallbackCover.drawText('Cover asset could not be loaded in this environment.', {
+              x: PDF_PAGE_MARGIN,
+              y: pageHeight - PDF_PAGE_MARGIN - 70,
+              size: 12,
+              font: helvetica,
+              color: rgb(0.2, 0.2, 0.2)
+            });
+          }
 
-            y += 8;
+          try {
+            const logoBytes = await fetchAssetBytes(PDF_ASSETS.logo);
+            logoImage = await pdfDoc.embedPng(logoBytes);
+            const logoScale = Math.min(1, PDF_LOGO_MAX_WIDTH / logoImage.width);
+            logoWidth = logoImage.width * logoScale;
+            logoHeight = logoImage.height * logoScale;
+          } catch (error) {
+            console.warn('Logo asset failed to load. Continuing without footer logo.', error);
+            logoImage = null;
+          }
+
+          let tocBackground = null;
+          try {
+            const tocBackgroundBytes = await loadSvgAsPngBytes(
+              PDF_ASSETS.tableOfContentsBackground,
+              pageWidth,
+              pageHeight
+            );
+            tocBackground = await pdfDoc.embedPng(tocBackgroundBytes);
+          } catch (error) {
+            console.warn('TOC background asset failed to load. Continuing without TOC background.', error);
+            tocBackground = null;
+          }
+
+          const tocPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          if (tocBackground) {
+            tocPage.drawImage(tocBackground, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+          }
+          tocPage.drawText('Table of Contents', {
+            x: PDF_PAGE_MARGIN,
+            y: pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE,
+            size: PDF_TOC_TITLE_SIZE,
+            font: helveticaBold,
+            color: rgb(0.08, 0.2, 0.4)
           });
-        });
 
-        doc.save(buildPdfFilename());
+          let page = pdfDoc.addPage([pageWidth, pageHeight]);
+          let cursorY = pageHeight - PDF_PAGE_MARGIN;
+          const groupStartPages = new Map();
+          let currentContentPageNumber = 1;
+
+          const ensureSpace = (requiredHeight = PDF_LINE_HEIGHT) => {
+            if (cursorY - requiredHeight < PDF_CONTENT_BOTTOM_MARGIN) {
+              page = pdfDoc.addPage([pageWidth, pageHeight]);
+              currentContentPageNumber += 1;
+              cursorY = pageHeight - PDF_PAGE_MARGIN;
+            }
+          };
+
+          const writeWrapped = (text, options = {}) => {
+            const { bold = false, fontSize = 11, indent = 0, spacingAfter = 0 } = options;
+            const font = bold ? helveticaBold : helvetica;
+            const lines = splitTextForPdf(text, font, fontSize, textWidth - indent);
+            const requiredHeight = Math.max(lines.length, 1) * PDF_LINE_HEIGHT + spacingAfter;
+            ensureSpace(requiredHeight);
+            lines.forEach((line) => {
+              page.drawText(line, {
+                x: PDF_PAGE_MARGIN + indent,
+                y: cursorY,
+                size: fontSize,
+                font,
+                color: rgb(0.1, 0.1, 0.1)
+              });
+              cursorY -= PDF_LINE_HEIGHT;
+            });
+            cursorY -= spacingAfter;
+          };
+
+          writeWrapped('Selected Policies', { bold: true, fontSize: 16 });
+          writeWrapped(`View mode: ${formatPdfValue(els.viewMode.value)}`);
+          writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`, { spacingAfter: 6 });
+
+          grouped.forEach(([title, policies]) => {
+            ensureSpace(PDF_LINE_HEIGHT * 3);
+            if (!groupStartPages.has(title)) {
+              groupStartPages.set(title, currentContentPageNumber);
+            }
+            writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
+
+            policies.forEach((policy) => {
+              const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
+              const showActions = els.viewMode.value === 'deep-dive';
+              const actionTitles = policy.actionIds.map(
+                (id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`
+              );
+              const fields = [
+                ['Policy', policy.policyText],
+                ['Scope', policy.scope],
+                ['Type', policy.type],
+                ['Issue Areas', policy.issueAreas.join(', ')],
+                ...(showCommentary ? [['Commentary', policy.commentary]] : []),
+                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : [])
+              ];
+
+              writeWrapped(formatPdfValue(policy.id), { bold: true, fontSize: 12 });
+              fields.forEach(([label, value]) => {
+                writeWrapped(`${label}: ${formatPdfValue(value)}`, { indent: 10 });
+              });
+              cursorY -= 8;
+            });
+          });
+
+          let tocCursorY = pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE - 28;
+          let tocTruncated = false;
+          for (const [title] of grouped) {
+            const entry = `${title}`;
+            const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
+            const numberWidth = helvetica.widthOfTextAtSize(numberLabel, 12);
+            const maxEntryWidth = pageWidth - PDF_PAGE_MARGIN * 2 - numberWidth - 20;
+            const entryLines = splitTextForPdf(entry, helvetica, 12, maxEntryWidth);
+
+            const blockHeight = Math.max(entryLines.length, 1) * PDF_LINE_HEIGHT + 4;
+            if (tocCursorY - blockHeight < PDF_CONTENT_BOTTOM_MARGIN) {
+              tocTruncated = true;
+              break;
+            }
+
+            for (let index = 0; index < entryLines.length; index += 1) {
+              const line = entryLines[index];
+              if (tocCursorY - PDF_LINE_HEIGHT < PDF_CONTENT_BOTTOM_MARGIN) {
+                tocTruncated = true;
+                break;
+              }
+              tocPage.drawText(line, {
+                x: PDF_PAGE_MARGIN,
+                y: tocCursorY,
+                size: 12,
+                font: helvetica,
+                color: rgb(0.08, 0.2, 0.4)
+              });
+
+              if (index === 0) {
+                tocPage.drawText(numberLabel, {
+                  x: pageWidth - PDF_PAGE_MARGIN - numberWidth,
+                  y: tocCursorY,
+                  size: 12,
+                  font: helveticaBold,
+                  color: rgb(0.08, 0.2, 0.4)
+                });
+              }
+
+              tocCursorY -= PDF_LINE_HEIGHT;
+            }
+
+            if (tocTruncated) {
+              break;
+            }
+            tocCursorY -= 4;
+          }
+
+          if (tocTruncated) {
+            tocPage.drawText('Additional sections omitted from this page.', {
+              x: PDF_PAGE_MARGIN,
+              y: PDF_CONTENT_BOTTOM_MARGIN - 12,
+              size: 10,
+              font: helvetica,
+              color: rgb(0.08, 0.2, 0.4)
+            });
+          }
+
+          const pages = pdfDoc.getPages();
+          pages.forEach((pdfPage, index) => {
+            if (index < 2) {
+              return;
+            }
+
+            const pageNumberLabel = String(index - 1);
+            const pageNumberWidth = helvetica.widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
+            if (logoImage) {
+              pdfPage.drawImage(logoImage, {
+                x: PDF_PAGE_MARGIN,
+                y: PDF_FOOTER_LOGO_Y,
+                width: logoWidth,
+                height: logoHeight
+              });
+            }
+            pdfPage.drawText(pageNumberLabel, {
+              x: pageWidth - PDF_PAGE_MARGIN - pageNumberWidth,
+              y: PDF_FOOTER_PAGE_NUMBER_Y,
+              size: PDF_FOOTER_TEXT_SIZE,
+              font: helvetica,
+              color: rgb(0.2, 0.2, 0.2)
+            });
+          });
+
+          const pdfBytes = await pdfDoc.save();
+          downloadPdfBlob(pdfBytes, buildPdfFilename());
+        } catch (error) {
+          alert(`Unable to generate PDF: ${error.message}`);
+        }
       }
 
       function bindEvents() {
