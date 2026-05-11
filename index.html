@@ -213,6 +213,7 @@
       <footer>Built from policies.csv and actions.csv</footer>
     </div>
 
+    <script src="./data.js"></script>
     <script>
       const els = {
         viewMode: document.getElementById('viewMode'),
@@ -240,6 +241,7 @@
       const PRINT_WINDOW_HEIGHT = 700;
       // 150ms keeps the print popup open long enough for dialog initialization in major browsers.
       const PRINT_CLOSE_DELAY_MS = 150;
+      const fallbackData = window.NYS_BUILDER_FALLBACK_DATA || {};
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
       function parseCsv(text) {
@@ -361,7 +363,7 @@
         const showActions = els.viewMode.value === 'deep-dive';
 
         const relatedTitles = policy.actionIds
-          .map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`);
+          .map((id) => state.actionsById.get(id) || `${escapeHtml(id)} ${MISSING_ACTION_LABEL}`);
 
         return `
           <article class="card" data-policy-id="${policyId}">
@@ -508,7 +510,7 @@
                           const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
                           const showActions = els.viewMode.value === 'deep-dive';
                           const actionTitles = policy.actionIds
-                            .map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`)
+                            .map((id) => state.actionsById.get(id) || `${escapeHtml(id)} ${MISSING_ACTION_LABEL}`)
                             .join('; ');
 
                           return `
@@ -583,14 +585,25 @@
       }
 
       async function load() {
-        const [actionsRes, policiesRes] = await Promise.all([fetch('./actions.csv'), fetch('./policies.csv')]);
-        if (!actionsRes.ok || !policiesRes.ok) {
-          const failures = [];
-          if (!actionsRes.ok) failures.push(`actions.csv (${actionsRes.status})`);
-          if (!policiesRes.ok) failures.push(`policies.csv (${policiesRes.status})`);
-          throw new Error(`Failed to load: ${failures.join(', ')}`);
-        }
-        const [actionsText, policiesText] = await Promise.all([actionsRes.text(), policiesRes.text()]);
+        const loadCsv = async (path, fallbackKey) => {
+          try {
+            const response = await fetch(path);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.text();
+          } catch (error) {
+            if (fallbackData[fallbackKey]) {
+              return fallbackData[fallbackKey];
+            }
+            throw new Error(`Failed to load ${path}: ${error.message}`);
+          }
+        };
+
+        const [actionsText, policiesText] = await Promise.all([
+          loadCsv('./actions.csv', 'actionsCsv'),
+          loadCsv('./policies.csv', 'policiesCsv')
+        ]);
 
         const actionRows = parseCsv(actionsText).filter((row) => ACTION_ID_PATTERN.test(row[0] || ''));
         const policyRows = parseCsv(policiesText).filter((row) => POLICY_ID_PATTERN.test(row[0] || ''));
