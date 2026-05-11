@@ -35,4 +35,4 @@ When loaded from `file://`, the app uses fallback data from `data.js` if `fetch(
 - Filtering: by **Scope**, **Type**, and **Issue Area**
 - Card selection with per-card and select-all-visible checkboxes
 - Shareable selected-view link
-- Print-to-PDF export of selected cards in the active view mode
+- Client-side PDF download of selected cards in the active view mode
