@@ -23,6 +23,7 @@
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+  --field-label-min-width: 92px;
 
   /* Motion */
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
