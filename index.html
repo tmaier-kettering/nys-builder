@@ -313,7 +313,11 @@
       }
 
       function buildPdfFilename() {
-        const today = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
         return `${PDF_FILE_PREFIX}-${els.viewMode.value}-${today}.pdf`;
       }
 
@@ -519,8 +523,8 @@
         };
 
         writeWrapped('Selected Policies', { font: 'bold', fontSize: 16 });
-        writeWrapped(`View mode: ${els.viewMode.value}`);
-        writeWrapped(`Grouped by: ${els.groupBy.value}`);
+        writeWrapped(`View mode: ${formatPdfValue(els.viewMode.value)}`);
+        writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`);
         y += 6;
 
         grouped.forEach(([title, policies]) => {
