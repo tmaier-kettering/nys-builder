@@ -213,6 +213,7 @@
       <footer>Built from policies.csv and actions.csv</footer>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="./data.js"></script>
     <script>
       const els = {
@@ -237,10 +238,9 @@
       const ACTION_ID_PATTERN = /^A\d+/i;
       const POLICY_ID_PATTERN = /^P\d+/i;
       const MISSING_ACTION_LABEL = '(not found)';
-      const PRINT_WINDOW_WIDTH = 900;
-      const PRINT_WINDOW_HEIGHT = 700;
-      // 150ms keeps the print popup open long enough for dialog initialization in major browsers.
-      const PRINT_CLOSE_DELAY_MS = 150;
+      const PDF_FILE_PREFIX = 'selected-policies';
+      const PDF_PAGE_MARGIN = 40;
+      const PDF_LINE_HEIGHT = 14;
       const fallbackData = window.NYS_BUILDER_FALLBACK_DATA || {};
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
@@ -301,6 +301,24 @@
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
+      }
+
+      function normalizePdfText(value) {
+        return String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ').trim();
+      }
+
+      function formatPdfValue(value) {
+        const normalized = normalizePdfText(value);
+        return normalized || 'N/A';
+      }
+
+      function buildPdfFilename() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+        return `${PDF_FILE_PREFIX}-${els.viewMode.value}-${today}.pdf`;
       }
 
       function buildFilterOptions(values) {
@@ -473,77 +491,74 @@
           return;
         }
 
-        const printWindow = window.open(
-          '',
-          '_blank',
-          `noopener,noreferrer,width=${PRINT_WINDOW_WIDTH},height=${PRINT_WINDOW_HEIGHT}`
-        );
-        if (!printWindow) {
-          alert('Please allow popups to export PDF.');
+        const grouped = buildGroups(selectedPolicies);
+        const jsPdfCtor = window.jspdf?.jsPDF;
+        if (!jsPdfCtor) {
+          alert('PDF download is temporarily unavailable. Please refresh and try again.');
           return;
         }
 
-        const grouped = buildGroups(selectedPolicies);
+        const doc = new jsPdfCtor({ unit: 'pt', format: 'letter' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const textWidth = pageWidth - PDF_PAGE_MARGIN * 2;
+        let y = PDF_PAGE_MARGIN;
 
-        const html = `
-          <html>
-            <head>
-              <title>Selected Policies - ${escapeHtml(els.viewMode.value)}</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 24px; }
-                h1 { margin: 0 0 8px; }
-                h2 { margin-top: 18px; border-bottom: 1px solid #ddd; }
-                .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; page-break-inside: avoid; }
-                .field { margin-top: 6px; }
-              </style>
-            </head>
-            <body>
-              <h1>Selected Policies</h1>
-              <p>View mode: ${escapeHtml(els.viewMode.value)}</p>
-              ${grouped
-                .map(
-                  ([title, policies]) => `
-                    <section>
-                      <h2>${escapeHtml(title)}</h2>
-                      ${policies
-                        .map((policy) => {
-                          const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
-                          const showActions = els.viewMode.value === 'deep-dive';
-                          const actionTitles = policy.actionIds
-                            .map((id) => state.actionsById.get(id) || `${escapeHtml(id)} ${MISSING_ACTION_LABEL}`)
-                            .join('; ');
+        const addPageIfNeeded = (requiredHeight = PDF_LINE_HEIGHT) => {
+          if (y + requiredHeight > pageHeight - PDF_PAGE_MARGIN) {
+            doc.addPage();
+            y = PDF_PAGE_MARGIN;
+          }
+        };
 
-                          return `
-                            <div class="card">
-                              <div><strong>${escapeHtml(policy.id)}</strong></div>
-                              <div class="field"><strong>Policy:</strong> ${escapeHtml(policy.policyText)}</div>
-                              <div class="field"><strong>Scope:</strong> ${escapeHtml(policy.scope)}</div>
-                              <div class="field"><strong>Type:</strong> ${escapeHtml(policy.type)}</div>
-                              <div class="field"><strong>Issue Areas:</strong> ${escapeHtml(policy.issueAreas.join(', '))}</div>
-                              ${showCommentary ? `<div class="field"><strong>Commentary:</strong> ${escapeHtml(policy.commentary || 'N/A')}</div>` : ''}
-                              ${showActions ? `<div class="field"><strong>Related Actions:</strong> ${escapeHtml(actionTitles || 'N/A')}</div>` : ''}
-                            </div>
-                          `;
-                        })
-                        .join('')}
-                    </section>
-                  `
-                )
-                .join('')}
-              <script>
-                window.onload = () => {
-                  window.print();
-                  // Keep the popup open briefly so the print dialog can initialize.
-                  setTimeout(() => window.close(), ${PRINT_CLOSE_DELAY_MS});
-                };
-              <\/script>
-            </body>
-          </html>
-        `;
+        const writeWrapped = (text, options = {}) => {
+          const { font = 'normal', fontSize = 11, indent = 0 } = options;
+          const safeText = formatPdfValue(text);
+          doc.setFont('helvetica', font);
+          doc.setFontSize(fontSize);
+          const wrapped = doc.splitTextToSize(safeText, textWidth - indent);
+          addPageIfNeeded(wrapped.length * PDF_LINE_HEIGHT);
+          doc.text(wrapped, PDF_PAGE_MARGIN + indent, y);
+          y += wrapped.length * PDF_LINE_HEIGHT;
+        };
 
-        printWindow.document.open();
-        printWindow.document.write(html);
-        printWindow.document.close();
+        writeWrapped('Selected Policies', { font: 'bold', fontSize: 16 });
+        writeWrapped(`View mode: ${formatPdfValue(els.viewMode.value)}`);
+        writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`);
+        y += 6;
+
+        grouped.forEach(([title, policies]) => {
+          addPageIfNeeded(PDF_LINE_HEIGHT * 3);
+          writeWrapped(title, { font: 'bold', fontSize: 13 });
+          y += 4;
+
+          policies.forEach((policy) => {
+            const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
+            const showActions = els.viewMode.value === 'deep-dive';
+            const actionTitles = policy.actionIds.map(
+              (id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`
+            );
+            const fields = [
+              ['Policy', policy.policyText],
+              ['Scope', policy.scope],
+              ['Type', policy.type],
+              ['Issue Areas', policy.issueAreas.join(', ')],
+              ...(showCommentary ? [['Commentary', policy.commentary]] : []),
+              ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : [])
+            ];
+
+            addPageIfNeeded(PDF_LINE_HEIGHT * 2);
+            writeWrapped(formatPdfValue(policy.id), { font: 'bold', fontSize: 12 });
+
+            fields.forEach(([label, value]) => {
+              writeWrapped(`${label}: ${formatPdfValue(value)}`, { indent: 10 });
+            });
+
+            y += 8;
+          });
+        });
+
+        doc.save(buildPdfFilename());
       }
 
       function bindEvents() {
