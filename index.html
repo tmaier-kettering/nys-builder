@@ -104,6 +104,8 @@
         tableOfContentsBackground: './assets/table_of_contents_background.svg',
         logo: './assets/LCOY_USA_Logo.png'
       };
+      const FILE_PROTOCOL_ASSET_HINT =
+        ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
       const fallbackData = window.NYS_BUILDER_FALLBACK_DATA || {};
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
@@ -188,6 +190,10 @@
         return ['All', ...[...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))];
       }
 
+      function getAssetFetchModeHint() {
+        return window.location.protocol === 'file:' ? FILE_PROTOCOL_ASSET_HINT : '';
+      }
+
       async function fetchAssetBytes(path) {
         try {
           const response = await fetch(path);
@@ -196,11 +202,7 @@
           }
           return new Uint8Array(await response.arrayBuffer());
         } catch (error) {
-          const modeHint =
-            window.location.protocol === 'file:'
-              ? ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)'
-              : '';
-          throw new Error(`Failed to load ${path}: ${error.message}${modeHint}`);
+          throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
         }
       }
 
@@ -212,11 +214,7 @@
           }
           return await response.text();
         } catch (error) {
-          const modeHint =
-            window.location.protocol === 'file:'
-              ? ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)'
-              : '';
-          throw new Error(`Failed to load ${path}: ${error.message}${modeHint}`);
+          throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
         }
       }
 
@@ -486,7 +484,8 @@
             const coverSource = await PDFDocument.load(coverPdfBytes);
             const [coverPage] = await pdfDoc.copyPages(coverSource, [0]);
             pdfDoc.addPage(coverPage);
-          } catch {
+          } catch (error) {
+            console.warn('Cover page asset failed to load. Using fallback cover page.', error);
             const fallbackCover = pdfDoc.addPage([pageWidth, pageHeight]);
             fallbackCover.drawText('NYS Builder Policy Explorer', {
               x: PDF_PAGE_MARGIN,
@@ -510,7 +509,8 @@
             const logoScale = Math.min(1, PDF_LOGO_MAX_WIDTH / logoImage.width);
             logoWidth = logoImage.width * logoScale;
             logoHeight = logoImage.height * logoScale;
-          } catch {
+          } catch (error) {
+            console.warn('Logo asset failed to load. Continuing without footer logo.', error);
             logoImage = null;
           }
 
@@ -522,7 +522,8 @@
               pageHeight
             );
             tocBackground = await pdfDoc.embedPng(tocBackgroundBytes);
-          } catch {
+          } catch (error) {
+            console.warn('TOC background asset failed to load. Continuing without TOC background.', error);
             tocBackground = null;
           }
 
