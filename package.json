@@ -1,0 +1,10 @@
+{
+  "name": "nys-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-page policy explorer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
