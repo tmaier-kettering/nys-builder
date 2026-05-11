@@ -235,7 +235,10 @@
       };
       const ACTION_ID_PATTERN = /^A\d+/i;
       const POLICY_ID_PATTERN = /^P\d+/i;
-      // Delay closing print popup to allow dialog initialization in major browsers.
+      const MISSING_ACTION_LABEL = '(not found)';
+      const PRINT_WINDOW_WIDTH = 900;
+      const PRINT_WINDOW_HEIGHT = 700;
+      // 150ms keeps the print popup open long enough for dialog initialization in major browsers.
       const PRINT_CLOSE_DELAY_MS = 150;
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
@@ -358,7 +361,7 @@
         const showActions = els.viewMode.value === 'deep-dive';
 
         const relatedTitles = policy.actionIds
-          .map((id) => state.actionsById.get(id) || `${id} (not found)`);
+          .map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`);
 
         return `
           <article class="card" data-policy-id="${policyId}">
@@ -468,7 +471,11 @@
           return;
         }
 
-        const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+        const printWindow = window.open(
+          '',
+          '_blank',
+          `noopener,noreferrer,width=${PRINT_WINDOW_WIDTH},height=${PRINT_WINDOW_HEIGHT}`
+        );
         if (!printWindow) {
           alert('Please allow popups to export PDF.');
           return;
@@ -501,7 +508,7 @@
                           const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
                           const showActions = els.viewMode.value === 'deep-dive';
                           const actionTitles = policy.actionIds
-                            .map((id) => state.actionsById.get(id) || `${id} (not found)`)
+                            .map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`)
                             .join('; ');
 
                           return `
@@ -605,8 +612,6 @@
           els.filterIssueArea,
           buildFilterOptions(state.policies.flatMap((p) => p.issueAreas))
         );
-
-        els.groupBy.value = 'scope';
 
         initializeFromQuery();
         bindEvents();
