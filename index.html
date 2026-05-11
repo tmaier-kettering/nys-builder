@@ -551,7 +551,7 @@
 
           let tocCursorY = pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE - 28;
           let tocTruncated = false;
-          outerLoop: for (const [title] of grouped) {
+          tocEntryLoop: for (const [title] of grouped) {
             const entry = `${title}`;
             const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
             const numberWidth = helvetica.widthOfTextAtSize(numberLabel, 12);
@@ -564,10 +564,11 @@
               break;
             }
 
-            entryLines.forEach((line, index) => {
+            for (let index = 0; index < entryLines.length; index += 1) {
+              const line = entryLines[index];
               if (tocCursorY - PDF_LINE_HEIGHT < PDF_CONTENT_BOTTOM_MARGIN) {
                 tocTruncated = true;
-                return;
+                break;
               }
               tocPage.drawText(line, {
                 x: PDF_PAGE_MARGIN,
@@ -588,10 +589,10 @@
               }
 
               tocCursorY -= PDF_LINE_HEIGHT;
-            });
+            }
 
             if (tocTruncated) {
-              break outerLoop;
+              break tocEntryLoop;
             }
             tocCursorY -= 4;
           }
