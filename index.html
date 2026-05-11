@@ -255,7 +255,7 @@
             result.push(line);
           }
 
-          if (paragraphIndex < paragraphs.length - 1 && result[result.length - 1] !== '') {
+          if (paragraphIndex < paragraphs.length - 1 && result.length > 0 && result[result.length - 1] !== '') {
             result.push('');
           }
         });
@@ -551,7 +551,7 @@
 
           let tocCursorY = pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE - 28;
           let tocTruncated = false;
-          tocEntryLoop: for (const [title] of grouped) {
+          for (const [title] of grouped) {
             const entry = `${title}`;
             const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
             const numberWidth = helvetica.widthOfTextAtSize(numberLabel, 12);
@@ -592,7 +592,7 @@
             }
 
             if (tocTruncated) {
-              break tocEntryLoop;
+              break;
             }
             tocCursorY -= 4;
           }
