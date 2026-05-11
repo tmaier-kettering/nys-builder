@@ -195,15 +195,15 @@ h1 {
   box-shadow: var(--shadow-hover);
 }
 
-.cards .card:nth-child(2n) {
+.cards .card:nth-child(4n + 2) {
   animation-delay: 60ms;
 }
 
-.cards .card:nth-child(3n) {
+.cards .card:nth-child(4n + 3) {
   animation-delay: 100ms;
 }
 
-.cards .card:nth-child(4n) {
+.cards .card:nth-child(4n + 4) {
   animation-delay: 140ms;
 }
 
