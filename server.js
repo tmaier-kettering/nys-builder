@@ -173,7 +173,9 @@ const server = http.createServer((req, res) => {
   if (parsedUrl.pathname === '/api/data') {
     if (!cachedData) {
       sendJson(res, 500, {
-        error: startupError?.message || 'Failed to read or parse CSV files.'
+        error:
+          startupError?.message ||
+          'Failed to read or parse CSV files. Ensure actions.csv and policies.csv exist in the repository root directory.'
       });
       return;
     }

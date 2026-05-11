@@ -408,7 +408,7 @@ async function init() {
     render();
   } catch (error) {
     elements.cardsContainer.innerHTML =
-      '<div class="empty-state">Unable to load policy data right now. Please try again.</div>';
+      `<div class="empty-state">Unable to load policy data right now. ${error.message}</div>`;
   }
 }
 
