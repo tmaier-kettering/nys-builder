@@ -235,6 +235,7 @@
       };
       const ACTION_ID_PATTERN = /^A\d+/i;
       const POLICY_ID_PATTERN = /^P\d+/i;
+      // Delay closing print popup to allow dialog initialization in major browsers.
       const PRINT_CLOSE_DELAY_MS = 150;
 
       // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
@@ -273,7 +274,7 @@
           }
         }
 
-        if (cur.length || row.length) {
+        if (cur.length || row.some((item) => item.length > 0)) {
           row.push(cur.trim());
           rows.push(row);
         }
@@ -298,7 +299,7 @@
       }
 
       function buildFilterOptions(values) {
-        return ['All', ...new Set(values.filter(Boolean).sort((a, b) => a.localeCompare(b)))];
+        return ['All', ...[...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))];
       }
 
       function setSelectOptions(selectEl, options) {
@@ -357,8 +358,7 @@
         const showActions = els.viewMode.value === 'deep-dive';
 
         const relatedTitles = policy.actionIds
-          .map((id) => state.actionsById.get(id) || `${id} (not found)`)
-          .filter(Boolean);
+          .map((id) => state.actionsById.get(id) || `${id} (not found)`);
 
         return `
           <article class="card" data-policy-id="${policyId}">
