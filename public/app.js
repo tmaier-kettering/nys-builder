@@ -76,7 +76,7 @@ function cardHtml(policy) {
   const showDeepDive = state.viewLevel === 'deep-dive';
 
   const actionTitles = splitCsvList(policy.actions)
-    .map((actionId) => state.actionsById.get(actionId)?.title || `Unknown Action (${actionId})`)
+    .map((actionId) => state.actionsById.get(actionId)?.title || `Action not found (${actionId})`)
     .filter(Boolean)
     .join('; ');
 
@@ -239,9 +239,7 @@ function buildShareUrl() {
 async function handleShare() {
   const url = buildShareUrl();
   if (!url) {
-    window.alert(
-      'Please select at least one policy card using the checkboxes before generating a share link.'
-    );
+    window.alert('Please select at least one policy card to generate a share link.');
     return;
   }
 
@@ -272,7 +270,7 @@ function policyTextForPdf(policy) {
 
   if (state.viewLevel === 'deep-dive') {
     const titles = splitCsvList(policy.actions)
-      .map((actionId) => state.actionsById.get(actionId)?.title || `Unknown Action (${actionId})`)
+      .map((actionId) => state.actionsById.get(actionId)?.title || `Action not found (${actionId})`)
       .filter(Boolean)
       .join('; ');
     lines.push(`Related Action Titles: ${titles || '—'}`);
@@ -284,9 +282,7 @@ function policyTextForPdf(policy) {
 function handlePdfDownload() {
   const selected = selectedPolicies();
   if (selected.length === 0) {
-    window.alert(
-      'Please select at least one policy card using the checkboxes before downloading PDF.'
-    );
+    window.alert('Please select at least one policy card to download PDF.');
     return;
   }
 
@@ -407,8 +403,11 @@ async function init() {
     bindEvents();
     render();
   } catch (error) {
-    elements.cardsContainer.innerHTML =
-      `<div class="empty-state">Unable to load policy data right now. ${error.message}</div>`;
+    const errorBox = document.createElement('div');
+    errorBox.className = 'empty-state';
+    errorBox.textContent = `Unable to load policy data right now. ${error.message}`;
+    elements.cardsContainer.innerHTML = '';
+    elements.cardsContainer.appendChild(errorBox);
   }
 }
 
