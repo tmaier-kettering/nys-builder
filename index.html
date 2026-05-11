@@ -96,7 +96,7 @@
       const PDF_FOOTER_TEXT_SIZE = 10;
       const PDF_LOGO_MAX_WIDTH = 90;
       const PDF_ASSETS = {
-        firstPage: './assets/first_page.pdf',
+        coverPage: './assets/first_page.pdf',
         tableOfContentsBackground: './assets/table_of_contents_background.svg',
         logo: './assets/LCOY_USA_Logo.png'
       };
@@ -447,7 +447,7 @@
         try {
           const { PDFDocument, StandardFonts, rgb } = pdfLib;
           const pdfDoc = await PDFDocument.create();
-          const coverPdfBytes = await fetchAssetBytes(PDF_ASSETS.firstPage);
+          const coverPdfBytes = await fetchAssetBytes(PDF_ASSETS.coverPage);
           const coverSource = await PDFDocument.load(coverPdfBytes);
           const [coverPage] = await pdfDoc.copyPages(coverSource, [0]);
           pdfDoc.addPage(coverPage);
@@ -518,7 +518,7 @@
           grouped.forEach(([title, policies]) => {
             ensureSpace(PDF_LINE_HEIGHT * 3);
             if (!groupStartPages.has(title)) {
-              groupStartPages.set(title, pdfDoc.getPageCount() - 1);
+              groupStartPages.set(title, pdfDoc.getPageCount());
             }
             writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
 
@@ -549,8 +549,7 @@
           let tocTruncated = false;
           for (const [title] of grouped) {
             const entry = `${title}`;
-            const pageNumber = groupStartPages.get(title);
-            const numberLabel = String(pageNumber || '-');
+            const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
             const numberWidth = helvetica.widthOfTextAtSize(numberLabel, 12);
             const maxEntryWidth = pageWidth - PDF_PAGE_MARGIN * 2 - numberWidth - 20;
             const entryLines = splitTextForPdf(entry, helvetica, 12, maxEntryWidth);
@@ -601,7 +600,7 @@
               return;
             }
 
-            const pageNumberLabel = String(index);
+            const pageNumberLabel = String(index + 1);
             const pageNumberWidth = helvetica.widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
             pdfPage.drawImage(logoImage, {
               x: PDF_PAGE_MARGIN,
