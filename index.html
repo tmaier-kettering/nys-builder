@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NYS Builder Policies</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: #f5f6f8;
+        color: #1f2937;
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+
+      .subtitle {
+        margin: 8px 0 24px;
+        color: #4b5563;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 230px 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .sidebar,
+      .main {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+
+      .sidebar {
+        padding: 14px;
+        position: sticky;
+        top: 16px;
+      }
+
+      .sidebar h2 {
+        font-size: 1rem;
+        margin: 0 0 12px;
+      }
+
+      .control {
+        margin-bottom: 12px;
+      }
+
+      .control label {
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+      }
+
+      .control select {
+        width: 100%;
+        padding: 6px;
+      }
+
+      .main {
+        padding: 14px;
+      }
+
+      .main-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+
+      .main-controls button {
+        margin-left: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+
+      .group {
+        margin-bottom: 20px;
+      }
+
+      .group h3 {
+        margin: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 6px;
+      }
+
+      .cards {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .card {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 12px;
+        width: 100%;
+        box-sizing: border-box;
+        background: #fcfcfd;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .field {
+        margin-top: 8px;
+      }
+
+      .field strong {
+        display: inline-block;
+        min-width: 90px;
+      }
+
+      .muted {
+        color: #6b7280;
+      }
+
+      footer {
+        margin-top: 24px;
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 900px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>NYS Builder Policy Explorer</h1>
+      <p class="subtitle">Browse, group, filter, and export policy recommendations.</p>
+
+      <div class="content">
+        <aside class="sidebar">
+          <h2>Options</h2>
+          <div class="control">
+            <label for="viewMode">View level</label>
+            <select id="viewMode">
+              <option value="skim">Skim</option>
+              <option value="peruse">Peruse</option>
+              <option value="deep-dive">Deep Dive</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="groupBy">Group cards by</label>
+            <select id="groupBy">
+              <option value="scope">Scope</option>
+              <option value="type">Type</option>
+              <option value="issueAreas">Issue Areas</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="filterScope">Filter by scope</label>
+            <select id="filterScope"></select>
+          </div>
+          <div class="control">
+            <label for="filterType">Filter by type</label>
+            <select id="filterType"></select>
+          </div>
+          <div class="control">
+            <label for="filterIssueArea">Filter by issue area</label>
+            <select id="filterIssueArea"></select>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="main-controls">
+            <label>
+              <input id="selectAllVisible" type="checkbox" />
+              Select all visible cards
+            </label>
+            <div>
+              <button id="shareBtn" type="button">Share selected view</button>
+              <button id="pdfBtn" type="button">Download selected PDF</button>
+            </div>
+          </div>
+          <div id="policyGroups"></div>
+        </main>
+      </div>
+
+      <footer>Built from policies.csv and actions.csv</footer>
+    </div>
+
+    <script>
+      const els = {
+        viewMode: document.getElementById('viewMode'),
+        groupBy: document.getElementById('groupBy'),
+        filterScope: document.getElementById('filterScope'),
+        filterType: document.getElementById('filterType'),
+        filterIssueArea: document.getElementById('filterIssueArea'),
+        selectAllVisible: document.getElementById('selectAllVisible'),
+        shareBtn: document.getElementById('shareBtn'),
+        pdfBtn: document.getElementById('pdfBtn'),
+        policyGroups: document.getElementById('policyGroups')
+      };
+
+      const state = {
+        policies: [],
+        actionsById: new Map(),
+        selectedPolicyIds: new Set(),
+        visiblePolicyIds: [],
+        onlySelectedFromLink: false
+      };
+
+      function parseCsv(text) {
+        const rows = [];
+        let cur = '';
+        let row = [];
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i += 1) {
+          const char = text[i];
+          const next = text[i + 1];
+
+          if (char === '"') {
+            if (inQuotes && next === '"') {
+              cur += '"';
+              i += 1;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            row.push(cur.trim());
+            cur = '';
+          } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (char === '\r' && next === '\n') {
+              i += 1;
+            }
+            row.push(cur.trim());
+            cur = '';
+            if (row.some((item) => item.length > 0)) {
+              rows.push(row);
+            }
+            row = [];
+          } else {
+            cur += char;
+          }
+        }
+
+        if (cur.length || row.length) {
+          row.push(cur.trim());
+          rows.push(row);
+        }
+
+        return rows;
+      }
+
+      function splitMulti(value) {
+        return (value || '')
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function optionValues(values) {
+        return ['All', ...new Set(values.filter(Boolean).sort((a, b) => a.localeCompare(b)))];
+      }
+
+      function setSelectOptions(selectEl, options) {
+        const current = selectEl.value;
+        selectEl.replaceChildren();
+        options.forEach((opt) => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt;
+          selectEl.append(option);
+        });
+        if (options.includes(current)) {
+          selectEl.value = current;
+        }
+      }
+
+      function getFilteredPolicies() {
+        let filtered = state.policies.filter((policy) => {
+          const scopePass = els.filterScope.value === 'All' || policy.scope === els.filterScope.value;
+          const typePass = els.filterType.value === 'All' || policy.type === els.filterType.value;
+          const issuePass =
+            els.filterIssueArea.value === 'All' || policy.issueAreas.includes(els.filterIssueArea.value);
+          return scopePass && typePass && issuePass;
+        });
+
+        if (state.onlySelectedFromLink) {
+          filtered = filtered.filter((policy) => state.selectedPolicyIds.has(policy.id));
+        }
+
+        return filtered;
+      }
+
+      function buildGroups(policies) {
+        const groups = new Map();
+        const keyName = els.groupBy.value;
+
+        policies.forEach((policy) => {
+          const keys =
+            keyName === 'issueAreas'
+              ? (policy.issueAreas.length ? policy.issueAreas : ['Unspecified'])
+              : [policy[keyName] || 'Unspecified'];
+
+          keys.forEach((key) => {
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(policy);
+          });
+        });
+
+        return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+      }
+
+      function cardHtml(policy) {
+        const policyId = escapeHtml(policy.id);
+        const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
+        const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
+        const showActions = els.viewMode.value === 'deep-dive';
+
+        const relatedTitles = policy.actionIds
+          .map((id) => state.actionsById.get(id) || `${id} (not found)`)
+          .filter(Boolean);
+
+        return `
+          <article class="card" data-policy-id="${policyId}">
+            <div class="card-header">
+              <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
+              <h4 class="card-title">${policyId}</h4>
+            </div>
+            <div class="field"><strong>Policy:</strong> ${policy.policyText ? escapeHtml(policy.policyText) : '<span class="muted">N/A</span>'}</div>
+            <div class="field"><strong>Scope:</strong> ${policy.scope ? escapeHtml(policy.scope) : '<span class="muted">N/A</span>'}</div>
+            <div class="field"><strong>Type:</strong> ${policy.type ? escapeHtml(policy.type) : '<span class="muted">N/A</span>'}</div>
+            <div class="field"><strong>Issue Areas:</strong> ${policy.issueAreas.length ? escapeHtml(policy.issueAreas.join(', ')) : '<span class="muted">N/A</span>'}</div>
+            ${
+              showCommentary
+                ? `<div class="field"><strong>Commentary:</strong> ${policy.commentary ? escapeHtml(policy.commentary) : '<span class="muted">N/A</span>'}</div>`
+                : ''
+            }
+            ${
+              showActions
+                ? `<div class="field"><strong>Related Actions:</strong> ${
+                    relatedTitles.length ? escapeHtml(relatedTitles.join('; ')) : '<span class="muted">N/A</span>'
+                  }</div>`
+                : ''
+            }
+          </article>
+        `;
+      }
+
+      function updateSelectAllVisible() {
+        const ids = state.visiblePolicyIds;
+        if (!ids.length) {
+          els.selectAllVisible.checked = false;
+          els.selectAllVisible.indeterminate = false;
+          return;
+        }
+
+        const selectedCount = ids.filter((id) => state.selectedPolicyIds.has(id)).length;
+        els.selectAllVisible.checked = selectedCount === ids.length;
+        els.selectAllVisible.indeterminate = selectedCount > 0 && selectedCount < ids.length;
+      }
+
+      function render() {
+        const filtered = getFilteredPolicies();
+        const groups = buildGroups(filtered);
+        state.visiblePolicyIds = [...new Set(filtered.map((p) => p.id))];
+
+        if (!groups.length) {
+          els.policyGroups.innerHTML = '<p class="muted">No cards match the current filters.</p>';
+          updateSelectAllVisible();
+          return;
+        }
+
+        els.policyGroups.innerHTML = groups
+          .map(
+            ([title, policies]) => `
+              <section class="group">
+                <h3>${escapeHtml(title)}</h3>
+                <div class="cards">
+                  ${policies.map(cardHtml).join('')}
+                </div>
+              </section>
+            `
+          )
+          .join('');
+
+        document.querySelectorAll('.card-checkbox').forEach((checkbox) => {
+          checkbox.addEventListener('change', (event) => {
+            const id = event.target.getAttribute('data-policy-id');
+            if (event.target.checked) {
+              state.selectedPolicyIds.add(id);
+            } else {
+              state.selectedPolicyIds.delete(id);
+            }
+            updateSelectAllVisible();
+          });
+        });
+
+        updateSelectAllVisible();
+      }
+
+      function copyShareLink() {
+        if (!state.selectedPolicyIds.size) {
+          alert('Select at least one card first.');
+          return;
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', els.viewMode.value);
+        url.searchParams.set('selected', [...state.selectedPolicyIds].join(','));
+        url.searchParams.set('onlySelected', '1');
+
+        const link = url.toString();
+
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(link).then(
+            () => alert('Share link copied to clipboard.'),
+            () => prompt('Copy this share link:', link)
+          );
+        } else {
+          prompt('Copy this share link:', link);
+        }
+      }
+
+      function downloadPdf() {
+        const selectedPolicies = state.policies.filter((policy) => state.selectedPolicyIds.has(policy.id));
+        if (!selectedPolicies.length) {
+          alert('Select at least one card first.');
+          return;
+        }
+
+        const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+        if (!printWindow) {
+          alert('Please allow popups to export PDF.');
+          return;
+        }
+
+        const grouped = buildGroups(
+          selectedPolicies.filter((policy) =>
+            state.onlySelectedFromLink ||
+            ((els.filterScope.value === 'All' || policy.scope === els.filterScope.value) &&
+              (els.filterType.value === 'All' || policy.type === els.filterType.value) &&
+              (els.filterIssueArea.value === 'All' || policy.issueAreas.includes(els.filterIssueArea.value)))
+          )
+        );
+
+        const html = `
+          <html>
+            <head>
+              <title>Selected Policies - ${escapeHtml(els.viewMode.value)}</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 24px; }
+                h1 { margin: 0 0 8px; }
+                h2 { margin-top: 18px; border-bottom: 1px solid #ddd; }
+                .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; page-break-inside: avoid; }
+                .field { margin-top: 6px; }
+              </style>
+            </head>
+            <body>
+              <h1>Selected Policies</h1>
+              <p>View mode: ${escapeHtml(els.viewMode.value)}</p>
+              ${grouped
+                .map(
+                  ([title, policies]) => `
+                    <section>
+                      <h2>${escapeHtml(title)}</h2>
+                      ${policies
+                        .map((policy) => {
+                          const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
+                          const showActions = els.viewMode.value === 'deep-dive';
+                          const actionTitles = policy.actionIds
+                            .map((id) => state.actionsById.get(id) || `${id} (not found)`)
+                            .join('; ');
+
+                          return `
+                            <div class="card">
+                              <div><strong>${escapeHtml(policy.id)}</strong></div>
+                              <div class="field"><strong>Policy:</strong> ${escapeHtml(policy.policyText)}</div>
+                              <div class="field"><strong>Scope:</strong> ${escapeHtml(policy.scope)}</div>
+                              <div class="field"><strong>Type:</strong> ${escapeHtml(policy.type)}</div>
+                              <div class="field"><strong>Issue Areas:</strong> ${escapeHtml(policy.issueAreas.join(', '))}</div>
+                              ${showCommentary ? `<div class="field"><strong>Commentary:</strong> ${escapeHtml(policy.commentary || 'N/A')}</div>` : ''}
+                              ${showActions ? `<div class="field"><strong>Related Actions:</strong> ${escapeHtml(actionTitles || 'N/A')}</div>` : ''}
+                            </div>
+                          `;
+                        })
+                        .join('')}
+                    </section>
+                  `
+                )
+                .join('')}
+              <script>
+                window.onload = () => {
+                  window.print();
+                  setTimeout(() => window.close(), 150);
+                };
+              </script>
+            </body>
+          </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+      }
+
+      function bindEvents() {
+        [
+          els.viewMode,
+          els.groupBy,
+          els.filterScope,
+          els.filterType,
+          els.filterIssueArea
+        ].forEach((el) => el.addEventListener('change', render));
+
+        els.selectAllVisible.addEventListener('change', (event) => {
+          state.visiblePolicyIds.forEach((id) => {
+            if (event.target.checked) {
+              state.selectedPolicyIds.add(id);
+            } else {
+              state.selectedPolicyIds.delete(id);
+            }
+          });
+          render();
+        });
+
+        els.shareBtn.addEventListener('click', copyShareLink);
+        els.pdfBtn.addEventListener('click', downloadPdf);
+      }
+
+      function initializeFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+
+        const view = params.get('view');
+        if (['skim', 'peruse', 'deep-dive'].includes(view)) {
+          els.viewMode.value = view;
+        }
+
+        const selected = splitMulti(params.get('selected'));
+        selected.forEach((id) => state.selectedPolicyIds.add(id));
+
+        state.onlySelectedFromLink = params.get('onlySelected') === '1' && selected.length > 0;
+      }
+
+      async function load() {
+        const [actionsRes, policiesRes] = await Promise.all([fetch('./actions.csv'), fetch('./policies.csv')]);
+        const [actionsText, policiesText] = await Promise.all([actionsRes.text(), policiesRes.text()]);
+
+        const actionRows = parseCsv(actionsText).filter((row) => /^A\d+/i.test(row[0] || ''));
+        const policyRows = parseCsv(policiesText).filter((row) => /^P\d+/i.test(row[0] || ''));
+
+        state.actionsById = new Map(actionRows.map((row) => [row[0], row[1] || 'Untitled Action']));
+        state.policies = policyRows.map((row) => ({
+          id: row[0],
+          policyText: row[1],
+          scope: row[2],
+          type: row[3],
+          issueAreas: splitMulti(row[4]),
+          commentary: row[5],
+          actionIds: splitMulti(row[6])
+        }));
+
+        setSelectOptions(els.filterScope, optionValues(state.policies.map((p) => p.scope)));
+        setSelectOptions(els.filterType, optionValues(state.policies.map((p) => p.type)));
+        setSelectOptions(
+          els.filterIssueArea,
+          optionValues(state.policies.flatMap((p) => p.issueAreas))
+        );
+
+        els.groupBy.value = 'scope';
+
+        initializeFromQuery();
+        bindEvents();
+        render();
+      }
+
+      load().catch((err) => {
+        els.policyGroups.innerHTML = `<p class="muted">Unable to load CSV files: ${err.message}</p>`;
+      });
+    </script>
+  </body>
+</html>
