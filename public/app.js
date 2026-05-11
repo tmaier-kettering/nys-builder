@@ -239,7 +239,9 @@ function buildShareUrl() {
 async function handleShare() {
   const url = buildShareUrl();
   if (!url) {
-    window.alert('Select at least one card to share.');
+    window.alert(
+      'Please select at least one policy card using the checkboxes before generating a share link.'
+    );
     return;
   }
 
@@ -282,7 +284,9 @@ function policyTextForPdf(policy) {
 function handlePdfDownload() {
   const selected = selectedPolicies();
   if (selected.length === 0) {
-    window.alert('Select at least one card to download.');
+    window.alert(
+      'Please select at least one policy card using the checkboxes before downloading PDF.'
+    );
     return;
   }
 

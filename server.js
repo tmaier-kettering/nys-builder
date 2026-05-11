@@ -155,7 +155,9 @@ const server = http.createServer((req, res) => {
       const data = loadData();
       sendJson(res, 200, data);
     } catch (error) {
-      sendJson(res, 500, { error: 'Unable to load data.' });
+      // eslint-disable-next-line no-console
+      console.error('Failed to read or parse CSV files.', error);
+      sendJson(res, 500, { error: 'Failed to read or parse CSV files.' });
     }
     return;
   }
