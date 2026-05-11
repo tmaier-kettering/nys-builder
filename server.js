@@ -66,8 +66,17 @@ function toRecords(rows) {
 }
 
 function loadData() {
-  const actionsCsv = fs.readFileSync(path.join(ROOT_DIR, 'actions.csv'), 'utf8');
-  const policiesCsv = fs.readFileSync(path.join(ROOT_DIR, 'policies.csv'), 'utf8');
+  const readCsvFile = (fileName) => {
+    const filePath = path.join(ROOT_DIR, fileName);
+    try {
+      return fs.readFileSync(filePath, 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to read ${fileName}: ${error.message}`);
+    }
+  };
+
+  const actionsCsv = readCsvFile('actions.csv');
+  const policiesCsv = readCsvFile('policies.csv');
 
   const actionRows = parseCsv(actionsCsv);
   const policyRows = parseCsv(policiesCsv);
@@ -101,10 +110,12 @@ function loadData() {
 }
 
 let cachedData = null;
+let startupError = null;
 
 try {
   cachedData = loadData();
 } catch (error) {
+  startupError = error;
   // eslint-disable-next-line no-console
   console.error('Failed to read or parse CSV files at startup.', error);
 }
@@ -161,7 +172,9 @@ const server = http.createServer((req, res) => {
 
   if (parsedUrl.pathname === '/api/data') {
     if (!cachedData) {
-      sendJson(res, 500, { error: 'Failed to read or parse CSV files.' });
+      sendJson(res, 500, {
+        error: startupError?.message || 'Failed to read or parse CSV files.'
+      });
       return;
     }
     sendJson(res, 200, cachedData);

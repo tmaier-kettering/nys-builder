@@ -291,7 +291,9 @@ function handlePdfDownload() {
   }
 
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    window.alert('PDF library failed to load.');
+    window.alert(
+      'Unable to load the PDF generator library. Please check your network connection and try again.'
+    );
     return;
   }
 
@@ -378,7 +380,9 @@ function bindEvents() {
 async function init() {
   try {
     const response = await fetch('/api/data');
-    if (!response.ok) throw new Error('Failed to load data.');
+    if (!response.ok) {
+      throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+    }
     const data = await response.json();
 
     state.policies = (data.policies || []).map((policy) => ({
