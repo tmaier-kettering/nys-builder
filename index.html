@@ -527,7 +527,7 @@
                   // Keep the popup open briefly so the print dialog can initialize.
                   setTimeout(() => window.close(), ${PRINT_CLOSE_DELAY_MS});
                 };
-              </script>
+              <\/script>
             </body>
           </html>
         `;
@@ -577,6 +577,12 @@
 
       async function load() {
         const [actionsRes, policiesRes] = await Promise.all([fetch('./actions.csv'), fetch('./policies.csv')]);
+        if (!actionsRes.ok || !policiesRes.ok) {
+          const failures = [];
+          if (!actionsRes.ok) failures.push(`actions.csv (${actionsRes.status})`);
+          if (!policiesRes.ok) failures.push(`policies.csv (${policiesRes.status})`);
+          throw new Error(`Failed to load: ${failures.join(', ')}`);
+        }
         const [actionsText, policiesText] = await Promise.all([actionsRes.text(), policiesRes.text()]);
 
         const actionRows = parseCsv(actionsText).filter((row) => ACTION_ID_PATTERN.test(row[0] || ''));
