@@ -33,6 +33,19 @@ function splitTextList(value) {
     .filter(Boolean);
 }
 
+function toText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map((item) => toText(item)).filter(Boolean).join(', ');
+  if (typeof value === 'object') {
+    if (typeof value.name === 'string' && value.name.trim()) return value.name.trim();
+    if (typeof value.url === 'string' && value.url.trim()) return value.url.trim();
+    return JSON.stringify(value);
+  }
+  return String(value).trim();
+}
+
 function pickFirstField(fields, candidates) {
   for (const candidate of candidates) {
     if (Object.hasOwn(fields, candidate) && fields[candidate] != null && fields[candidate] !== '') {
@@ -147,6 +160,41 @@ function buildSourceMaps(recordsByTable) {
   };
 }
 
+function buildRecordNamesByTableId(recordsByTable, namedTables) {
+  const recordsByTableId = new Map();
+
+  for (const tableName of REQUIRED_TABLES) {
+    const tableMeta = namedTables[tableName];
+    if (!tableMeta) continue;
+    recordsByTableId.set(
+      tableMeta.id,
+      new Map(recordsByTable[tableName].map((record) => [record.id, toText(getTableRecordName(record))]))
+    );
+  }
+
+  return recordsByTableId;
+}
+
+function normalizeFieldValue(value, fieldDefinition, recordNamesByTableId) {
+  if (value == null || value === '') {
+    return '';
+  }
+
+  if (fieldDefinition?.type === 'multipleRecordLinks') {
+    const linkedTableId = fieldDefinition.options?.linkedTableId;
+    const linkedRecordNameMap = linkedTableId ? recordNamesByTableId.get(linkedTableId) : null;
+    const linkedRecordIds = asArray(value);
+    if (!linkedRecordIds.length) return '';
+    return linkedRecordIds.map((id) => linkedRecordNameMap?.get(id) || id).filter(Boolean);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => toText(item)).filter(Boolean);
+  }
+
+  return toText(value);
+}
+
 function normalizeAction(record) {
   const fields = record.fields || {};
   const title = String(
@@ -163,8 +211,13 @@ function normalizeAction(record) {
   };
 }
 
-function normalizePolicy(record, sourceMaps) {
+function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId) {
   const fields = record.fields || {};
+  const policyColumns = {};
+
+  for (const field of policyTable.fields || []) {
+    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId);
+  }
 
   const policyRecordTopicIds = asArray(pickFirstField(fields, ['Topic', 'Topics']));
   const policyRecordSubtopicIds = asArray(pickFirstField(fields, ['Subtopic', 'Subtopics']));
@@ -220,15 +273,20 @@ function normalizePolicy(record, sourceMaps) {
     type: String(pickFirstField(fields, ['Type', 'Policy Type']) || '').trim(),
     issueAreas: [...topicNames].sort((a, b) => a.localeCompare(b)),
     commentary: String(pickFirstField(fields, ['Commentary', 'Notes', 'Description']) || '').trim(),
-    actionRecordIds: policyRecordActionIds
+    actionRecordIds: policyRecordActionIds,
+    columns: policyColumns
   };
 }
 
-function buildOutputData(recordsByTable) {
+function buildOutputData(recordsByTable, namedTables) {
   const sourceMaps = buildSourceMaps(recordsByTable);
+  const recordNamesByTableId = buildRecordNamesByTableId(recordsByTable, namedTables);
+  const policyTable = namedTables.policies;
 
   const actions = recordsByTable.actions.map(normalizeAction);
-  const policies = recordsByTable.policies.map((record) => normalizePolicy(record, sourceMaps));
+  const policies = recordsByTable.policies.map((record) =>
+    normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId)
+  );
 
   const actionByRecordId = new Map(actions.map((action) => [action.recordId, action]));
   const policyByRecordId = new Map(policies.map((policy) => [policy.recordId, policy]));
@@ -266,7 +324,8 @@ function buildOutputData(recordsByTable) {
         type: policy.type,
         issueAreas: policy.issueAreas,
         commentary: policy.commentary,
-        actionIds: linkedActionIds.sort((a, b) => a.localeCompare(b))
+        actionIds: linkedActionIds.sort((a, b) => a.localeCompare(b)),
+        columns: policy.columns
       };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -276,7 +335,8 @@ function buildOutputData(recordsByTable) {
       generatedAt: new Date().toISOString(),
       source: 'Airtable',
       baseId,
-      tables: REQUIRED_TABLES.map((name) => titleCase(name))
+      tables: REQUIRED_TABLES.map((name) => titleCase(name)),
+      policyColumns: (policyTable.fields || []).map((field) => field.name)
     },
     actions: actionList,
     policies: policyList
@@ -292,7 +352,7 @@ async function main() {
     recordsByTable[tableName] = await fetchTableRecords(namedTables[tableName].name);
   }
 
-  const outputData = buildOutputData(recordsByTable);
+  const outputData = buildOutputData(recordsByTable, namedTables);
   const jsContent = `window.NYS_BUILDER_DATA = ${JSON.stringify(outputData, null, 2)};\n`;
   await writeFile(OUTPUT_FILE, jsContent, 'utf8');
 

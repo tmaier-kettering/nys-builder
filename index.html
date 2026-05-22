@@ -80,6 +80,7 @@
 
       const state = {
         policies: [],
+        policyColumns: [],
         actionsById: new Map(),
         selectedPolicyIds: new Set(),
         visiblePolicyIds: [],
@@ -120,6 +121,31 @@
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
+      }
+
+      function formatFieldValue(value) {
+        if (Array.isArray(value)) {
+          return value
+            .map((item) => String(item ?? '').trim())
+            .filter(Boolean)
+            .join(', ');
+        }
+        if (value == null) return '';
+        if (typeof value === 'object') {
+          try {
+            return JSON.stringify(value);
+          } catch (error) {
+            return String(value);
+          }
+        }
+        return String(value).trim();
+      }
+
+      function renderField(label, value) {
+        const text = formatFieldValue(value);
+        return `<div class="field"><strong>${escapeHtml(label)}:</strong> ${
+          text ? escapeHtml(text) : '<span class="muted">N/A</span>'
+        }</div>`;
       }
 
       function normalizePdfText(value) {
@@ -303,8 +329,12 @@
         const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
         const showActions = els.viewMode.value === 'deep-dive';
 
-        const relatedTitles = policy.actionIds
-          .map((id) => state.actionsById.get(id) || `${escapeHtml(id)} ${MISSING_ACTION_LABEL}`);
+        const relatedTitles = policy.actionIds.map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`);
+        const allPolicyColumns = state.policyColumns
+          .map((columnName) => [columnName, policy.columns?.[columnName]])
+          .filter(([columnName]) => columnName && columnName !== '#')
+          .map(([columnName, value]) => renderField(columnName, value))
+          .join('');
 
         return `
           <article class="card" data-policy-id="${policyId}">
@@ -312,22 +342,21 @@
               <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
               <h4 class="card-title">${policyId}</h4>
             </div>
-            <div class="field"><strong>Policy:</strong> ${policy.policyText ? escapeHtml(policy.policyText) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Scope:</strong> ${policy.scope ? escapeHtml(policy.scope) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Type:</strong> ${policy.type ? escapeHtml(policy.type) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Issue Areas:</strong> ${policy.issueAreas.length ? escapeHtml(policy.issueAreas.join(', ')) : '<span class="muted">N/A</span>'}</div>
+            ${renderField('Policy', policy.policyText)}
+            ${renderField('Scope', policy.scope)}
+            ${renderField('Type', policy.type)}
+            ${renderField('Issue Areas', policy.issueAreas)}
             ${
               showCommentary
-                ? `<div class="field"><strong>Commentary:</strong> ${policy.commentary ? escapeHtml(policy.commentary) : '<span class="muted">N/A</span>'}</div>`
+                ? renderField('Commentary', policy.commentary)
                 : ''
             }
             ${
               showActions
-                ? `<div class="field"><strong>Related Actions:</strong> ${
-                    relatedTitles.length ? escapeHtml(relatedTitles.join('; ')) : '<span class="muted">N/A</span>'
-                  }</div>`
+                ? renderField('Related Actions', relatedTitles.join('; '))
                 : ''
             }
+            ${allPolicyColumns}
           </article>
         `;
       }
@@ -548,7 +577,10 @@
                 ['Type', policy.type],
                 ['Issue Areas', policy.issueAreas.join(', ')],
                 ...(showCommentary ? [['Commentary', policy.commentary]] : []),
-                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : [])
+                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : []),
+                ...state.policyColumns
+                  .filter((columnName) => columnName && columnName !== '#')
+                  .map((columnName) => [columnName, formatFieldValue(policy.columns?.[columnName])])
               ];
 
               writeWrapped(formatPdfValue(policy.id), { bold: true, fontSize: 12 });
@@ -698,6 +730,10 @@
         state.actionsById = new Map(
           actions.map((action) => [String(action.id || '').trim(), action.title || 'Untitled Action'])
         );
+        const metadataPolicyColumns = Array.isArray(sourceData?.metadata?.policyColumns)
+          ? sourceData.metadata.policyColumns.map((name) => String(name || '').trim()).filter(Boolean)
+          : [];
+
         state.policies = policies.map((policy) => ({
           id: String(policy.id || '').trim(),
           policyText: policy.policyText || '',
@@ -709,8 +745,15 @@
           commentary: policy.commentary || '',
           actionIds: Array.isArray(policy.actionIds)
             ? policy.actionIds.map((item) => String(item).trim()).filter(Boolean)
-            : splitMulti(policy.actionIds)
+            : splitMulti(policy.actionIds),
+          columns:
+            policy.columns && typeof policy.columns === 'object' && !Array.isArray(policy.columns)
+              ? policy.columns
+              : {}
         }));
+
+        const derivedPolicyColumns = [...new Set(state.policies.flatMap((policy) => Object.keys(policy.columns)))];
+        state.policyColumns = [...new Set([...metadataPolicyColumns, ...derivedPolicyColumns])];
 
         setSelectOptions(els.filterScope, buildFilterOptions(state.policies.map((p) => p.scope)));
         setSelectOptions(els.filterType, buildFilterOptions(state.policies.map((p) => p.type)));

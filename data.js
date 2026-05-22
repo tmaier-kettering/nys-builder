@@ -1,7 +1,8 @@
 window.NYS_BUILDER_DATA = {
   metadata: {
     generatedAt: '2026-05-22T00:00:00.000Z',
-    source: 'Seed Data'
+    source: 'Seed Data',
+    policyColumns: ['#', 'Policy', 'Scope', 'Type', 'Issue Areas', 'Commentary', 'Actions', 'UNFCCC pillar']
   },
   actions: [
     {
@@ -27,7 +28,19 @@ window.NYS_BUILDER_DATA = {
       issueAreas: ['Energy & Decarbonization'],
       commentary:
         'Ambitious long-term plans may seem unrealistic, but many examples exist where they are already being implemented. For example SIDS are... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-      actionIds: ['A1']
+      actionIds: ['A1'],
+      columns: {
+        '#': 'P1',
+        Policy:
+          'Recognize that achieving a Just Transition(s) is inseparable fromdelivering a just, orderly, and equitable phaseout of fossil fuels in line withkeeping 1.5 degrees within reach. A Just Transition requires ensuringequitable global energy security and committing to fully implement thedecisions and pathways identified in the first Global Stocktake, includingthrough updated NDCs and Just Transition Plans no later than 2026.',
+        Scope: 'International',
+        Type: 'Just Transition',
+        'Issue Areas': ['Energy & Decarbonization'],
+        Commentary:
+          'Ambitious long-term plans may seem unrealistic, but many examples exist where they are already being implemented. For example SIDS are... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        Actions: ['A1'],
+        'UNFCCC pillar': 'Mitigation'
+      }
     },
     {
       id: 'P2',
@@ -38,7 +51,19 @@ window.NYS_BUILDER_DATA = {
       issueAreas: ['Transportation & Mobility'],
       commentary:
         'the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-      actionIds: ['A2', 'A3']
+      actionIds: ['A2', 'A3'],
+      columns: {
+        '#': 'P2',
+        Policy:
+          'Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps.',
+        Scope: 'International',
+        Type: 'Adaptation',
+        'Issue Areas': ['Transportation & Mobility'],
+        Commentary:
+          'the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        Actions: ['A2', 'A3'],
+        'UNFCCC pillar': 'Adaptation'
+      }
     },
     {
       id: 'P3',
@@ -49,7 +74,18 @@ window.NYS_BUILDER_DATA = {
       issueAreas: ['Transportation & Mobility'],
       commentary:
         'The Paris Agreement and the Paris Group are separate entities. While the US left the Paris Agreement, it did not leave the Paris group... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-      actionIds: ['A1']
+      actionIds: ['A1'],
+      columns: {
+        '#': 'P3',
+        Policy: 'Rejoin the Paris Agreement, and fulfill their role to act on climate changeas agreed under the UNFCCC.',
+        Scope: 'Domestic',
+        Type: 'Federal',
+        'Issue Areas': ['Transportation & Mobility'],
+        Commentary:
+          'The Paris Agreement and the Paris Group are separate entities. While the US left the Paris Agreement, it did not leave the Paris group... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        Actions: ['A1'],
+        'UNFCCC pillar': 'Mitigation'
+      }
     },
     {
       id: 'P4',
@@ -60,7 +96,19 @@ window.NYS_BUILDER_DATA = {
       issueAreas: ['Agriculture & Food Systems'],
       commentary:
         'Many states already have action plans in place that can serve as a reference point... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-      actionIds: []
+      actionIds: [],
+      columns: {
+        '#': 'P4',
+        Policy:
+          'Deploy statewide multi-hazard early warning systems by 2027 coveringheat, flood, wildfire, and air quality risks with accessible multilingual alertsdelivered through redundant channels (e.g., Maryland, Oregon, Massachusetts,California).',
+        Scope: 'Domestic',
+        Type: 'Subnational',
+        'Issue Areas': ['Agriculture & Food Systems'],
+        Commentary:
+          'Many states already have action plans in place that can serve as a reference point... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        Actions: [],
+        'UNFCCC pillar': 'Resilience'
+      }
     }
   ]
 };

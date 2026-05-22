@@ -37,6 +37,8 @@ cd nys-builder
 node ./scripts/sync-airtable-data.mjs
 ```
 
+The sync script reads Airtable schema metadata, captures the exact field list from the `policies` table, and writes all policy columns to `data.js`. The UI renders those columns directly on policy cards (for example, `UNFCCC pillar` when present).
+
 Direct file open is also supported:
 
 - `file:///path/to/your/nys-builder/index.html`
