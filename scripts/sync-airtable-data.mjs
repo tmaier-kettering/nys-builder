@@ -1,0 +1,305 @@
+import { writeFile } from 'node:fs/promises';
+
+const AIRTABLE_API_ROOT = 'https://api.airtable.com/v0';
+const META_API_ROOT = 'https://api.airtable.com/v0/meta';
+const OUTPUT_FILE = new URL('../data.js', import.meta.url);
+
+const REQUIRED_TABLES = ['policies', 'actions', 'topics', 'subtopics', 'scope', 'jurisdiction'];
+
+const token = process.env.AIRTABLE_TOKEN;
+const baseId = process.env.AIRTABLE_BASE_ID;
+
+if (!token || !baseId) {
+  console.error('Missing AIRTABLE_TOKEN or AIRTABLE_BASE_ID.');
+  process.exit(1);
+}
+
+function normalizeName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
+}
+
+function asArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (value == null) return [];
+  return [value].filter(Boolean);
+}
+
+function splitTextList(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function pickFirstField(fields, candidates) {
+  for (const candidate of candidates) {
+    if (Object.hasOwn(fields, candidate) && fields[candidate] != null && fields[candidate] !== '') {
+      return fields[candidate];
+    }
+  }
+  return '';
+}
+
+function titleCase(text) {
+  return String(text || '')
+    .replace(/[-_]/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getTableRecordName(record) {
+  return (
+    pickFirstField(record.fields, ['Name', 'Title', 'Label', 'Value', '#', 'ID']) ||
+    record.id
+  );
+}
+
+async function airtableGetJson(url) {
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Airtable request failed (${response.status}): ${text}`);
+  }
+
+  return response.json();
+}
+
+async function fetchSchema() {
+  const schema = await airtableGetJson(`${META_API_ROOT}/bases/${baseId}/tables`);
+  return Array.isArray(schema.tables) ? schema.tables : [];
+}
+
+async function fetchTableRecords(tableName) {
+  const encodedName = encodeURIComponent(tableName);
+  let offset;
+  const records = [];
+
+  do {
+    const url = new URL(`${AIRTABLE_API_ROOT}/${baseId}/${encodedName}`);
+    url.searchParams.set('pageSize', '100');
+    if (offset) {
+      url.searchParams.set('offset', offset);
+    }
+
+    const payload = await airtableGetJson(url.toString());
+    records.push(...(payload.records || []));
+    offset = payload.offset;
+  } while (offset);
+
+  return records;
+}
+
+function mapNamedTables(schemaTables) {
+  const tableMap = new Map();
+  for (const table of schemaTables) {
+    tableMap.set(normalizeName(table.name), table);
+  }
+
+  const missing = REQUIRED_TABLES.filter((name) => !tableMap.has(name));
+  if (missing.length > 0) {
+    throw new Error(`Missing required Airtable tables: ${missing.join(', ')}`);
+  }
+
+  return Object.fromEntries(REQUIRED_TABLES.map((name) => [name, tableMap.get(name)]));
+}
+
+function buildSourceMaps(recordsByTable) {
+  const topicsById = new Map();
+  const subtopicsById = new Map();
+  const scopeById = new Map();
+  const jurisdictionById = new Map();
+
+  for (const record of recordsByTable.topics) {
+    topicsById.set(record.id, getTableRecordName(record));
+  }
+
+  for (const record of recordsByTable.scope) {
+    scopeById.set(record.id, getTableRecordName(record));
+  }
+
+  for (const record of recordsByTable.jurisdiction) {
+    jurisdictionById.set(record.id, getTableRecordName(record));
+  }
+
+  for (const record of recordsByTable.subtopics) {
+    const fields = record.fields || {};
+    const parentTopicLinks = asArray(
+      pickFirstField(fields, ['Topic', 'Topics', 'Parent Topic', 'Parent Topics'])
+    );
+
+    subtopicsById.set(record.id, {
+      name: getTableRecordName(record),
+      topicIds: parentTopicLinks
+    });
+  }
+
+  return {
+    topicsById,
+    subtopicsById,
+    scopeById,
+    jurisdictionById
+  };
+}
+
+function normalizeAction(record) {
+  const fields = record.fields || {};
+  const title = String(
+    pickFirstField(fields, ['Action Title', 'Action', 'Name', 'Title', 'Policy Action']) || 'Untitled Action'
+  ).trim();
+
+  const policyRecordIds = asArray(pickFirstField(fields, ['Policy', 'Policies', 'Related Policies']));
+
+  return {
+    recordId: record.id,
+    id: String(pickFirstField(fields, ['#', 'Action ID', 'ID']) || record.id).trim(),
+    title,
+    policyRecordIds
+  };
+}
+
+function normalizePolicy(record, sourceMaps) {
+  const fields = record.fields || {};
+
+  const policyRecordTopicIds = asArray(pickFirstField(fields, ['Topic', 'Topics']));
+  const policyRecordSubtopicIds = asArray(pickFirstField(fields, ['Subtopic', 'Subtopics']));
+  const policyRecordScopeIds = asArray(pickFirstField(fields, ['Scope', 'Scopes']));
+  const policyRecordJurisdictionIds = asArray(pickFirstField(fields, ['Jurisdiction', 'Jurisdictions']));
+  const policyRecordActionIds = asArray(pickFirstField(fields, ['Actions', 'Action']));
+
+  const topicNames = new Set();
+  for (const topicId of policyRecordTopicIds) {
+    const topic = sourceMaps.topicsById.get(topicId);
+    if (topic) topicNames.add(String(topic));
+  }
+
+  for (const subtopicId of policyRecordSubtopicIds) {
+    const subtopic = sourceMaps.subtopicsById.get(subtopicId);
+    if (!subtopic) continue;
+    if (subtopic.topicIds.length) {
+      for (const topicId of subtopic.topicIds) {
+        const topic = sourceMaps.topicsById.get(topicId);
+        if (topic) topicNames.add(String(topic));
+      }
+    } else if (subtopic.name) {
+      topicNames.add(String(subtopic.name));
+    }
+  }
+
+  splitTextList(pickFirstField(fields, ['Issue Areas', 'Issue Area'])).forEach((name) => topicNames.add(name));
+
+  const scopeNames = policyRecordScopeIds
+    .map((id) => sourceMaps.scopeById.get(id))
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  const jurisdictionNames = policyRecordJurisdictionIds
+    .map((id) => sourceMaps.jurisdictionById.get(id))
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  const directScope = String(pickFirstField(fields, ['Scope', 'Policy Scope']) || '').trim();
+  const directJurisdiction = String(pickFirstField(fields, ['Jurisdiction']) || '').trim();
+
+  const scope = [scopeNames.join(', '), jurisdictionNames.join(', '), directScope, directJurisdiction]
+    .map((value) => String(value || '').trim())
+    .find(Boolean);
+
+  return {
+    recordId: record.id,
+    id: String(pickFirstField(fields, ['#', 'Policy ID', 'ID']) || record.id).trim(),
+    policyText: String(
+      pickFirstField(fields, ['Policy', 'Policy Text', 'Full policy language', 'Recommendation']) || ''
+    ).trim(),
+    scope: scope || '',
+    type: String(pickFirstField(fields, ['Type', 'Policy Type']) || '').trim(),
+    issueAreas: [...topicNames].sort((a, b) => a.localeCompare(b)),
+    commentary: String(pickFirstField(fields, ['Commentary', 'Notes', 'Description']) || '').trim(),
+    actionRecordIds: policyRecordActionIds
+  };
+}
+
+function buildOutputData(recordsByTable) {
+  const sourceMaps = buildSourceMaps(recordsByTable);
+
+  const actions = recordsByTable.actions.map(normalizeAction);
+  const policies = recordsByTable.policies.map((record) => normalizePolicy(record, sourceMaps));
+
+  const actionByRecordId = new Map(actions.map((action) => [action.recordId, action]));
+  const policyByRecordId = new Map(policies.map((policy) => [policy.recordId, policy]));
+
+  for (const action of actions) {
+    for (const policyRecordId of action.policyRecordIds) {
+      const policy = policyByRecordId.get(policyRecordId);
+      if (!policy) continue;
+      policy.actionRecordIds.push(action.recordId);
+    }
+  }
+
+  const actionList = actions
+    .map((action) => ({
+      id: action.id,
+      title: action.title
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  const policyList = policies
+    .map((policy) => {
+      const linkedActionIds = [
+        ...new Set(
+          policy.actionRecordIds
+            .map((actionRecordId) => actionByRecordId.get(actionRecordId))
+            .filter(Boolean)
+            .map((action) => action.id)
+        )
+      ];
+
+      return {
+        id: policy.id,
+        policyText: policy.policyText,
+        scope: policy.scope,
+        type: policy.type,
+        issueAreas: policy.issueAreas,
+        commentary: policy.commentary,
+        actionIds: linkedActionIds.sort((a, b) => a.localeCompare(b))
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return {
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      source: 'Airtable',
+      baseId,
+      tables: REQUIRED_TABLES.map((name) => titleCase(name))
+    },
+    actions: actionList,
+    policies: policyList
+  };
+}
+
+async function main() {
+  const schemaTables = await fetchSchema();
+  const namedTables = mapNamedTables(schemaTables);
+
+  const recordsByTable = {};
+  for (const tableName of REQUIRED_TABLES) {
+    recordsByTable[tableName] = await fetchTableRecords(namedTables[tableName].name);
+  }
+
+  const outputData = buildOutputData(recordsByTable);
+  const jsContent = `window.NYS_BUILDER_DATA = ${JSON.stringify(outputData, null, 2)};\n`;
+  await writeFile(OUTPUT_FILE, jsContent, 'utf8');
+
+  console.log(`Wrote ${outputData.policies.length} policies and ${outputData.actions.length} actions to data.js`);
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});
