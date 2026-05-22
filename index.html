@@ -107,6 +107,28 @@
         ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
       const sourceData = window.NYS_BUILDER_DATA || {};
 
+      const HIDDEN_CARD_COLUMNS = ['#', 'Policy ID', 'ID', 'Policy Identifier'];
+
+      const CARD_COLUMNS_BY_VIEW = {
+        skim: [
+          'Policy'
+        ],
+        peruse: [
+          'Policy',
+          'Scope',
+          'Jurisdiction',
+          'Type',
+          'UNFCCC pillar',
+          'Topic',
+          'Subtopic',
+          'Commentary',
+          'Draft Year',
+          'Approval Status'
+        ],
+        'deep-dive': 'ALL'
+      };
+
+
       function splitMulti(value) {
         return (value || '')
           .split(',')
@@ -324,42 +346,33 @@
       }
 
       function cardHtml(policy) {
-        const policyId = escapeHtml(policy.id);
-        const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
-        const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
-        const showActions = els.viewMode.value === 'deep-dive';
+  const policyId = escapeHtml(policy.id);
+  const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
+  const viewMode = els.viewMode.value;
 
-        const relatedTitles = policy.actionIds.map((id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`);
-        const allPolicyColumns = state.policyColumns
-          .map((columnName) => [columnName, policy.columns?.[columnName]])
-          .filter(([columnName]) => columnName && columnName !== '#')
-          .map(([columnName, value]) => renderField(columnName, value))
-          .join('');
+  const configuredColumns = CARD_COLUMNS_BY_VIEW[viewMode] || CARD_COLUMNS_BY_VIEW.skim;
+  const allowedColumns =
+    configuredColumns === 'ALL'
+      ? state.policyColumns.filter((columnName) => !HIDDEN_CARD_COLUMNS.includes(columnName))
+      : configuredColumns;
 
-        return `
-          <article class="card" data-policy-id="${policyId}">
-            <div class="card-header">
-              <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
-              <h4 class="card-title">${policyId}</h4>
-            </div>
-            ${renderField('Policy', policy.policyText)}
-            ${renderField('Scope', policy.scope)}
-            ${renderField('Type', policy.type)}
-            ${renderField('Issue Areas', policy.issueAreas)}
-            ${
-              showCommentary
-                ? renderField('Commentary', policy.commentary)
-                : ''
-            }
-            ${
-              showActions
-                ? renderField('Related Actions', relatedTitles.join('; '))
-                : ''
-            }
-            ${allPolicyColumns}
-          </article>
-        `;
-      }
+  const allPolicyColumns = state.policyColumns
+    .filter((columnName) => allowedColumns.includes(columnName))
+    .map((columnName) => [columnName, policy.columns?.[columnName]])
+    .filter(([columnName, value]) => columnName && formatFieldValue(value))
+    .map(([columnName, value]) => renderField(columnName, value))
+    .join('');
+
+  return `
+    <article class="card" data-policy-id="${policyId}">
+      <div class="card-header">
+        <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
+        <h4 class="card-title">${policyId}</h4>
+      </div>
+      ${allPolicyColumns}
+    </article>
+  `;
+}
 
       function updateSelectAllVisible() {
         const ids = state.visiblePolicyIds;

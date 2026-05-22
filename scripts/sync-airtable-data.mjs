@@ -63,9 +63,25 @@ function titleCase(text) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function getTableRecordName(record) {
+function getPrimaryFieldName(tableMeta) {
+  if (!tableMeta?.primaryFieldId || !Array.isArray(tableMeta.fields)) {
+    return null;
+  }
+
+  const primaryField = tableMeta.fields.find((field) => field.id === tableMeta.primaryFieldId);
+  return primaryField?.name || null;
+}
+
+function getTableRecordName(record, tableMeta) {
+  const primaryFieldName = getPrimaryFieldName(tableMeta);
+  if (primaryFieldName) {
+    const primaryValue = record?.fields?.[primaryFieldName];
+    const primaryText = toText(primaryValue);
+    if (primaryText) return primaryText;
+  }
+
   return (
-    pickFirstField(record.fields, ['Name', 'Title', 'Label', 'Value', '#', 'ID']) ||
+    pickFirstField(record.fields || {}, ['Name', 'Title', 'Label', 'Value', '#', 'ID']) ||
     record.id
   );
 }
@@ -122,22 +138,22 @@ function mapNamedTables(schemaTables) {
   return Object.fromEntries(REQUIRED_TABLES.map((name) => [name, tableMap.get(name)]));
 }
 
-function buildSourceMaps(recordsByTable) {
+function buildSourceMaps(recordsByTable, namedTables) {
   const topicsById = new Map();
   const subtopicsById = new Map();
   const scopeById = new Map();
   const jurisdictionById = new Map();
 
   for (const record of recordsByTable.topics) {
-    topicsById.set(record.id, getTableRecordName(record));
+    topicsById.set(record.id, getTableRecordName(record, namedTables.topics));
   }
 
   for (const record of recordsByTable.scope) {
-    scopeById.set(record.id, getTableRecordName(record));
+    scopeById.set(record.id, getTableRecordName(record, namedTables.scope));
   }
 
   for (const record of recordsByTable.jurisdiction) {
-    jurisdictionById.set(record.id, getTableRecordName(record));
+    jurisdictionById.set(record.id, getTableRecordName(record, namedTables.jurisdiction));
   }
 
   for (const record of recordsByTable.subtopics) {
@@ -147,7 +163,7 @@ function buildSourceMaps(recordsByTable) {
     );
 
     subtopicsById.set(record.id, {
-      name: getTableRecordName(record),
+      name: getTableRecordName(record, namedTables.subtopics),
       topicIds: parentTopicLinks
     });
   }
@@ -168,24 +184,65 @@ function buildRecordNamesByTableId(recordsByTable, namedTables) {
     if (!tableMeta) continue;
     recordsByTableId.set(
       tableMeta.id,
-      new Map(recordsByTable[tableName].map((record) => [record.id, toText(getTableRecordName(record))]))
+      new Map(
+        recordsByTable[tableName].map((record) => [record.id, toText(getTableRecordName(record, tableMeta))])
+      )
     );
   }
 
   return recordsByTableId;
 }
 
-function normalizeFieldValue(value, fieldDefinition, recordNamesByTableId) {
+function inferLinkedTableName(fieldName) {
+  const normalized = normalizeName(fieldName);
+
+  if (['scope', 'scopes'].includes(normalized)) return 'scope';
+  if (['jurisdiction', 'jurisdictions'].includes(normalized)) return 'jurisdiction';
+  if (['topic', 'topics', 'issue area', 'issue areas'].includes(normalized)) return 'topics';
+  if (['subtopic', 'subtopics'].includes(normalized)) return 'subtopics';
+  if (['action', 'actions'].includes(normalized)) return 'actions';
+  if (['policy', 'policies', 'related policies'].includes(normalized)) return 'policies';
+
+  return null;
+}
+
+function getLinkedRecordNameMap(fieldDefinition, recordNamesByTableId, namedTables) {
+  const linkedTableId = fieldDefinition?.options?.linkedTableId;
+  if (linkedTableId && recordNamesByTableId.has(linkedTableId)) {
+    return recordNamesByTableId.get(linkedTableId);
+  }
+
+  const inferredTableName = inferLinkedTableName(fieldDefinition?.name || '');
+  const inferredTable = inferredTableName ? namedTables[inferredTableName] : null;
+  if (inferredTable?.id && recordNamesByTableId.has(inferredTable.id)) {
+    return recordNamesByTableId.get(inferredTable.id);
+  }
+
+  return null;
+}
+
+function normalizeFieldValue(value, fieldDefinition, recordNamesByTableId, namedTables) {
   if (value == null || value === '') {
     return '';
   }
 
-  if (fieldDefinition?.type === 'multipleRecordLinks') {
-    const linkedTableId = fieldDefinition.options?.linkedTableId;
-    const linkedRecordNameMap = linkedTableId ? recordNamesByTableId.get(linkedTableId) : null;
-    const linkedRecordIds = asArray(value);
-    if (!linkedRecordIds.length) return '';
-    return linkedRecordIds.map((id) => linkedRecordNameMap?.get(id) || id).filter(Boolean);
+  const linkedRecordNameMap = getLinkedRecordNameMap(fieldDefinition, recordNamesByTableId, namedTables);
+
+  const mapLinkedIds = (items) => {
+    const ids = asArray(items).map((item) => toText(item)).filter(Boolean);
+    if (!ids.length) return '';
+    return ids.map((id) => linkedRecordNameMap?.get(id) || id).filter(Boolean);
+  };
+
+  if (linkedRecordNameMap) {
+    if (Array.isArray(value)) {
+      return mapLinkedIds(value);
+    }
+
+    const textValue = toText(value);
+    if (/^rec[a-zA-Z0-9]+$/.test(textValue)) {
+      return linkedRecordNameMap.get(textValue) || textValue;
+    }
   }
 
   if (Array.isArray(value)) {
@@ -211,12 +268,12 @@ function normalizeAction(record) {
   };
 }
 
-function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId) {
+function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables) {
   const fields = record.fields || {};
   const policyColumns = {};
 
   for (const field of policyTable.fields || []) {
-    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId);
+    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
   }
 
   const policyRecordTopicIds = asArray(pickFirstField(fields, ['Topic', 'Topics']));
@@ -265,7 +322,8 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId) 
 
   return {
     recordId: record.id,
-    id: String(pickFirstField(fields, ['#', 'Policy ID', 'ID']) || record.id).trim(),
+    id: String(
+  pickFirstField(fields, ['#', 'Policy ID', 'ID']) || getTableRecordName(record, policyTable) || record.id).trim(),
     policyText: String(
       pickFirstField(fields, ['Policy', 'Policy Text', 'Full policy language', 'Recommendation']) || ''
     ).trim(),
@@ -279,13 +337,13 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId) 
 }
 
 function buildOutputData(recordsByTable, namedTables) {
-  const sourceMaps = buildSourceMaps(recordsByTable);
+  const sourceMaps = buildSourceMaps(recordsByTable, namedTables);
   const recordNamesByTableId = buildRecordNamesByTableId(recordsByTable, namedTables);
   const policyTable = namedTables.policies;
 
   const actions = recordsByTable.actions.map(normalizeAction);
   const policies = recordsByTable.policies.map((record) =>
-    normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId)
+    normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables)
   );
 
   const actionByRecordId = new Map(actions.map((action) => [action.recordId, action]));
