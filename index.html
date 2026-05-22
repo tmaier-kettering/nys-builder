@@ -60,7 +60,7 @@
         </main>
       </div>
 
-      <footer>Built from policies.csv and actions.csv</footer>
+      <footer>Built from Airtable</footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -80,13 +80,12 @@
 
       const state = {
         policies: [],
+        policyColumns: [],
         actionsById: new Map(),
         selectedPolicyIds: new Set(),
         visiblePolicyIds: [],
         onlySelectedFromLink: false
       };
-      const ACTION_ID_PATTERN = /^A\d+/i;
-      const POLICY_ID_PATTERN = /^P\d+/i;
       const MISSING_ACTION_LABEL = '(not found)';
       const PDF_FILE_PREFIX = 'selected-policies';
       const PDF_PAGE_MARGIN = 40;
@@ -106,51 +105,29 @@
       };
       const FILE_PROTOCOL_ASSET_HINT =
         ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
-      const fallbackData = window.NYS_BUILDER_FALLBACK_DATA || {};
+      const sourceData = window.NYS_BUILDER_DATA || {};
 
-      // Lightweight CSV parser handling quoted fields, escaped quotes, and mixed line endings.
-      function parseCsv(text) {
-        const rows = [];
-        let cur = '';
-        let row = [];
-        let inQuotes = false;
+      const HIDDEN_CARD_COLUMNS = ['#', 'Policy ID', 'ID', 'Policy Identifier'];
 
-        for (let i = 0; i < text.length; i += 1) {
-          const char = text[i];
-          const next = text[i + 1];
+      const CARD_COLUMNS_BY_VIEW = {
+        skim: [
+          'Policy'
+        ],
+        peruse: [
+          'Policy',
+          'Scope',
+          'Jurisdiction',
+          'Type',
+          'UNFCCC pillar',
+          'Topic',
+          'Subtopic',
+          'Commentary',
+          'Draft Year',
+          'Approval Status'
+        ],
+        'deep-dive': 'ALL'
+      };
 
-          if (char === '"') {
-            if (inQuotes && next === '"') {
-              cur += '"';
-              i += 1;
-            } else {
-              inQuotes = !inQuotes;
-            }
-          } else if (char === ',' && !inQuotes) {
-            row.push(cur.trim());
-            cur = '';
-          } else if ((char === '\n' || char === '\r') && !inQuotes) {
-            if (char === '\r' && next === '\n') {
-              i += 1;
-            }
-            row.push(cur.trim());
-            cur = '';
-            if (row.some((item) => item.length > 0)) {
-              rows.push(row);
-            }
-            row = [];
-          } else {
-            cur += char;
-          }
-        }
-
-        if (cur.length || row.some((item) => item.length > 0)) {
-          row.push(cur.trim());
-          rows.push(row);
-        }
-
-        return rows;
-      }
 
       function splitMulti(value) {
         return (value || '')
@@ -166,6 +143,31 @@
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
+      }
+
+      function formatFieldValue(value) {
+        if (Array.isArray(value)) {
+          return value
+            .map((item) => String(item ?? '').trim())
+            .filter(Boolean)
+            .join(', ');
+        }
+        if (value == null) return '';
+        if (typeof value === 'object') {
+          try {
+            return JSON.stringify(value);
+          } catch (error) {
+            return String(value);
+          }
+        }
+        return String(value).trim();
+      }
+
+      function renderField(label, value) {
+        const text = formatFieldValue(value);
+        return `<div class="field"><strong>${escapeHtml(label)}:</strong> ${
+          text ? escapeHtml(text) : '<span class="muted">N/A</span>'
+        }</div>`;
       }
 
       function normalizePdfText(value) {
@@ -344,39 +346,33 @@
       }
 
       function cardHtml(policy) {
-        const policyId = escapeHtml(policy.id);
-        const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
-        const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
-        const showActions = els.viewMode.value === 'deep-dive';
+  const policyId = escapeHtml(policy.id);
+  const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
+  const viewMode = els.viewMode.value;
 
-        const relatedTitles = policy.actionIds
-          .map((id) => state.actionsById.get(id) || `${escapeHtml(id)} ${MISSING_ACTION_LABEL}`);
+  const configuredColumns = CARD_COLUMNS_BY_VIEW[viewMode] || CARD_COLUMNS_BY_VIEW.skim;
+  const allowedColumns =
+    configuredColumns === 'ALL'
+      ? state.policyColumns.filter((columnName) => !HIDDEN_CARD_COLUMNS.includes(columnName))
+      : configuredColumns;
 
-        return `
-          <article class="card" data-policy-id="${policyId}">
-            <div class="card-header">
-              <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
-              <h4 class="card-title">${policyId}</h4>
-            </div>
-            <div class="field"><strong>Policy:</strong> ${policy.policyText ? escapeHtml(policy.policyText) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Scope:</strong> ${policy.scope ? escapeHtml(policy.scope) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Type:</strong> ${policy.type ? escapeHtml(policy.type) : '<span class="muted">N/A</span>'}</div>
-            <div class="field"><strong>Issue Areas:</strong> ${policy.issueAreas.length ? escapeHtml(policy.issueAreas.join(', ')) : '<span class="muted">N/A</span>'}</div>
-            ${
-              showCommentary
-                ? `<div class="field"><strong>Commentary:</strong> ${policy.commentary ? escapeHtml(policy.commentary) : '<span class="muted">N/A</span>'}</div>`
-                : ''
-            }
-            ${
-              showActions
-                ? `<div class="field"><strong>Related Actions:</strong> ${
-                    relatedTitles.length ? escapeHtml(relatedTitles.join('; ')) : '<span class="muted">N/A</span>'
-                  }</div>`
-                : ''
-            }
-          </article>
-        `;
-      }
+  const allPolicyColumns = state.policyColumns
+    .filter((columnName) => allowedColumns.includes(columnName))
+    .map((columnName) => [columnName, policy.columns?.[columnName]])
+    .filter(([columnName, value]) => columnName && formatFieldValue(value))
+    .map(([columnName, value]) => renderField(columnName, value))
+    .join('');
+
+  return `
+    <article class="card" data-policy-id="${policyId}">
+      <div class="card-header">
+        <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
+        <h4 class="card-title">${policyId}</h4>
+      </div>
+      ${allPolicyColumns}
+    </article>
+  `;
+}
 
       function updateSelectAllVisible() {
         const ids = state.visiblePolicyIds;
@@ -594,7 +590,10 @@
                 ['Type', policy.type],
                 ['Issue Areas', policy.issueAreas.join(', ')],
                 ...(showCommentary ? [['Commentary', policy.commentary]] : []),
-                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : [])
+                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : []),
+                ...state.policyColumns
+                  .filter((columnName) => columnName && columnName !== '#')
+                  .map((columnName) => [columnName, formatFieldValue(policy.columns?.[columnName])])
               ];
 
               writeWrapped(formatPdfValue(policy.id), { bold: true, fontSize: 12 });
@@ -734,39 +733,40 @@
       }
 
       async function load() {
-        const loadCsv = async (path, fallbackKey) => {
-          try {
-            const response = await fetch(path);
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
-            return await response.text();
-          } catch (error) {
-            if (fallbackData[fallbackKey]) {
-              return fallbackData[fallbackKey];
-            }
-            throw new Error(`Failed to load ${path}: ${error.message}`);
-          }
-        };
+        const actions = Array.isArray(sourceData.actions) ? sourceData.actions : [];
+        const policies = Array.isArray(sourceData.policies) ? sourceData.policies : [];
 
-        const [actionsText, policiesText] = await Promise.all([
-          loadCsv('./actions.csv', 'actionsCsv'),
-          loadCsv('./policies.csv', 'policiesCsv')
-        ]);
+        if (!actions.length && !policies.length) {
+          throw new Error('No Airtable data is available in data.js');
+        }
 
-        const actionRows = parseCsv(actionsText).filter((row) => ACTION_ID_PATTERN.test(row[0] || ''));
-        const policyRows = parseCsv(policiesText).filter((row) => POLICY_ID_PATTERN.test(row[0] || ''));
+        state.actionsById = new Map(
+          actions.map((action) => [String(action.id || '').trim(), action.title || 'Untitled Action'])
+        );
+        const metadataPolicyColumns = Array.isArray(sourceData?.metadata?.policyColumns)
+          ? sourceData.metadata.policyColumns.map((name) => String(name || '').trim()).filter(Boolean)
+          : [];
 
-        state.actionsById = new Map(actionRows.map((row) => [row[0], row[1] || 'Untitled Action']));
-        state.policies = policyRows.map((row) => ({
-          id: row[0],
-          policyText: row[1],
-          scope: row[2],
-          type: row[3],
-          issueAreas: splitMulti(row[4]),
-          commentary: row[5],
-          actionIds: splitMulti(row[6])
+        state.policies = policies.map((policy) => ({
+          id: String(policy.id || '').trim(),
+          policyText: policy.policyText || '',
+          scope: policy.scope || '',
+          type: policy.type || '',
+          issueAreas: Array.isArray(policy.issueAreas)
+            ? policy.issueAreas.map((item) => String(item).trim()).filter(Boolean)
+            : splitMulti(policy.issueAreas),
+          commentary: policy.commentary || '',
+          actionIds: Array.isArray(policy.actionIds)
+            ? policy.actionIds.map((item) => String(item).trim()).filter(Boolean)
+            : splitMulti(policy.actionIds),
+          columns:
+            policy.columns && typeof policy.columns === 'object' && !Array.isArray(policy.columns)
+              ? policy.columns
+              : {}
         }));
+
+        const derivedPolicyColumns = [...new Set(state.policies.flatMap((policy) => Object.keys(policy.columns)))];
+        state.policyColumns = [...new Set([...metadataPolicyColumns, ...derivedPolicyColumns])];
 
         setSelectOptions(els.filterScope, buildFilterOptions(state.policies.map((p) => p.scope)));
         setSelectOptions(els.filterType, buildFilterOptions(state.policies.map((p) => p.type)));
@@ -783,7 +783,7 @@
       load().catch((err) => {
         const errorEl = document.createElement('p');
         errorEl.className = 'muted';
-        errorEl.textContent = `Unable to load CSV files: ${err.message}`;
+        errorEl.textContent = `Unable to load Airtable data: ${err.message}`;
         els.policyGroups.replaceChildren(errorEl);
       });
     </script>
