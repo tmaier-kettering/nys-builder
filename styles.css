@@ -12,11 +12,13 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
   color: var(--color-text);
   background:
-    radial-gradient(circle at 8% 5%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 22%),
-    radial-gradient(circle at 92% 9%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 22%),
+    radial-gradient(circle at 8% 5%, color-mix(in srgb, var(--color-light-green) 14%, transparent), transparent 22%),
+    radial-gradient(circle at 92% 9%, color-mix(in srgb, var(--color-turquoise) 12%, transparent), transparent 22%),
     var(--color-bg);
 }
 
@@ -28,9 +30,10 @@ body {
 
 h1 {
   margin: 0;
-  font-size: clamp(1.8rem, 3.8vw, 2.6rem);
+  font-size: clamp(var(--font-size-h1), 3.8vw, var(--font-size-title));
+  font-weight: var(--font-weight-black);
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   animation: fade-slide-down var(--duration-slow) var(--ease-standard) both;
 }
 
@@ -38,7 +41,8 @@ h1 {
   margin: 0.75rem 0 1.6rem;
   max-width: 62ch;
   color: var(--color-text-muted);
-  font-size: clamp(1rem, 1.4vw, 1.08rem);
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-light);
   animation: fade-slide-down var(--duration-slow) var(--ease-standard) 80ms both;
 }
 
@@ -66,8 +70,10 @@ h1 {
 
 .sidebar h2 {
   margin: 0 0 0.9rem;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .control {
@@ -77,8 +83,8 @@ h1 {
 .control label {
   display: block;
   margin-bottom: 0.45rem;
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
 }
 
@@ -124,8 +130,8 @@ h1 {
   align-items: center;
   gap: 0.4rem;
   color: var(--color-text-muted);
-  font-size: 0.93rem;
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
 }
 
 .main-controls button {
@@ -136,8 +142,10 @@ h1 {
   background: var(--color-primary);
   color: #fff;
   cursor: pointer;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: calc(var(--font-size-body) * 0.9);
   transition:
     transform var(--duration-fast) var(--ease-standard),
     background-color var(--duration-fast) ease,
@@ -163,10 +171,11 @@ h1 {
 .group h3 {
   margin: 0 0 0.8rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 1.02rem;
+  border-bottom: 2px solid var(--color-light-green);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--color-text) 88%, var(--color-primary));
+  color: var(--color-dark-green);
 }
 
 .cards {
@@ -215,7 +224,8 @@ h1 {
 
 .card-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.01em;
 }
 
@@ -230,7 +240,8 @@ h1 {
 .field strong {
   display: inline-block;
   min-width: var(--field-label-min-width);
-  color: color-mix(in srgb, var(--color-text) 80%, var(--color-primary));
+  color: var(--color-mint-green);
+  font-weight: var(--font-weight-semibold);
 }
 
 .muted,
@@ -240,7 +251,7 @@ footer {
 
 footer {
   margin-top: 1.3rem;
-  font-size: 0.91rem;
+  font-size: var(--font-size-body);
 }
 
 @keyframes fade-slide-down {
@@ -326,8 +337,8 @@ footer {
   background: var(--color-primary);
   color: #fff;
   text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
   box-shadow: var(--shadow-soft);
   transition:
@@ -355,8 +366,8 @@ details.control > summary.filter-header {
   list-style: none;
   user-select: none;
   margin-bottom: 0;
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   padding: 0.2rem 0;
 }
@@ -393,8 +404,8 @@ details.control > summary.filter-header + * {
   display: block;
   padding: 0.38rem 0.6rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-normal);
   color: var(--color-text);
   cursor: pointer;
   transition:
@@ -410,7 +421,7 @@ details.control > summary.filter-header + * {
 .view-level-btn.active {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .view-level-btn:focus-visible {
@@ -428,7 +439,8 @@ details.control > summary.filter-header + * {
 .card-title {
   flex: 1;
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.01em;
 }
 
@@ -482,40 +494,40 @@ details.control > summary.filter-header + * {
   align-items: center;
   padding: 0.18rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.73rem;
-  font-weight: 600;
+  font-size: calc(var(--font-size-body) * 0.85);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
 .chip-scope {
-  background: color-mix(in srgb, #0e6eff 13%, transparent);
-  color: #0044bb;
+  background: color-mix(in srgb, #142E5B 13%, transparent);
+  color: #142E5B;
 }
 
 .chip-jurisdiction {
-  background: color-mix(in srgb, #22a05a 13%, transparent);
-  color: #166b3c;
+  background: color-mix(in srgb, #78C44C 18%, transparent);
+  color: #3a6a18;
 }
 
 .chip-unfccc-pillar {
-  background: color-mix(in srgb, #8b5cf6 13%, transparent);
-  color: #5b21b6;
+  background: color-mix(in srgb, #00AB9C 14%, transparent);
+  color: #006b60;
 }
 
 .chip-topic {
-  background: color-mix(in srgb, #f97316 13%, transparent);
-  color: #b84200;
+  background: color-mix(in srgb, #06794A 13%, transparent);
+  color: #06794A;
 }
 
 .chip-subtopic {
-  background: color-mix(in srgb, #24b3a7 14%, transparent);
-  color: #0e7c72;
+  background: color-mix(in srgb, #008968 13%, transparent);
+  color: #005c44;
 }
 
 .chip-draft-year {
-  background: color-mix(in srgb, #64748b 13%, transparent);
-  color: #334155;
+  background: color-mix(in srgb, #3d5870 13%, transparent);
+  color: #2a3f55;
 }
 
 /* ── Topic/subtopic filter tree ─────────────────────────────── */
@@ -536,7 +548,7 @@ details.control > summary.filter-header + * {
   display: flex;
   align-items: baseline;
   gap: 0.3rem;
-  font-size: 0.86rem;
+  font-size: var(--font-size-body);
   cursor: pointer;
   padding: 0.12rem 0.2rem;
   border-radius: 6px;
@@ -545,7 +557,7 @@ details.control > summary.filter-header + * {
 }
 
 .topic-label {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text);
 }
 
@@ -562,7 +574,7 @@ details.control > summary.filter-header + * {
 }
 
 .subtopic-label {
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--color-text-muted);
 }
 
