@@ -15,6 +15,15 @@
     <div class="page">
       <h1>NYS Builder Policy Explorer</h1>
       <p class="subtitle">Browse, group, filter, and export policy recommendations.</p>
+      <div class="search-row">
+        <label class="search-label" for="policySearch">Search policy text</label>
+        <input
+          id="policySearch"
+          type="search"
+          placeholder="Search within policy text..."
+          autocomplete="off"
+        />
+      </div>
 
       <div class="content">
         <aside class="sidebar">
@@ -76,6 +85,7 @@
         groupBy: document.getElementById('groupBy'),
         filterScope: document.getElementById('filterScope'),
         topicSubtopicFilter: document.getElementById('topicSubtopicFilter'),
+        policySearch: document.getElementById('policySearch'),
         selectAllVisible: document.getElementById('selectAllVisible'),
         shareBtn: document.getElementById('shareBtn'),
         pdfBtn: document.getElementById('pdfBtn'),
@@ -92,7 +102,8 @@
         viewMode: 'skim',
         cardViewLevels: new Map(),
         topicSubtopicFilter: new Set(),
-        topicsData: []
+        topicsData: [],
+        searchQuery: ''
       };
 
       const MISSING_ACTION_LABEL = '(not found)';
@@ -177,9 +188,30 @@
 
       function renderField(label, value) {
         const text = formatFieldValue(value);
+        const normalizedSearchQuery = state.searchQuery.trim();
+        const shouldHighlight = label === 'Policy' && normalizedSearchQuery;
         return `<div class="field"><strong>${escapeHtml(label)}:</strong> ${
-          text ? escapeHtml(text) : '<span class="muted">N/A</span>'
+          text
+            ? shouldHighlight
+              ? highlightMatches(text, normalizedSearchQuery)
+              : escapeHtml(text)
+            : '<span class="muted">N/A</span>'
         }</div>`;
+      }
+
+      function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      function highlightMatches(text, query) {
+        const source = String(text ?? '');
+        if (!query) return escapeHtml(source);
+        const matcher = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        return escapeHtml(source).replace(matcher, '<mark class="policy-highlight">$1</mark>');
+      }
+
+      function getPolicySearchText(policy) {
+        return formatFieldValue(policy.columns?.['Policy'] ?? policy.policyText);
       }
 
       function normalizePdfText(value) {
@@ -341,7 +373,11 @@
               policySubtopics.some((s) => state.topicSubtopicFilter.has(s));
           }
 
-          return scopePass && topicPass;
+          const normalizedSearchQuery = state.searchQuery.trim().toLowerCase();
+          const policyText = getPolicySearchText(policy).toLowerCase();
+          const searchPass = !normalizedSearchQuery || policyText.includes(normalizedSearchQuery);
+
+          return scopePass && topicPass && searchPass;
         });
 
         if (state.onlySelectedFromLink) {
@@ -813,6 +849,11 @@
 
         // Group by and scope filter
         [els.groupBy, els.filterScope].forEach((el) => el.addEventListener('change', render));
+
+        els.policySearch.addEventListener('input', (event) => {
+          state.searchQuery = event.target.value || '';
+          render();
+        });
 
         // Select all visible
         els.selectAllVisible.addEventListener('change', (event) => {
