@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-05-22T23:34:37.571Z",
+    "generatedAt": "2026-05-23T01:25:31.003Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -237,14 +237,91 @@ window.NYS_BUILDER_DATA = {
     {
       "name": "Agriculture & Food Systems",
       "subtopics": [
-        "Electrification of industry",
-        "Reducing food waste across the supply chain"
+        "Farming, fishing, and livestock",
+        "Reducing food waste across the supply chain",
+        "Shifting toward sustainable diets"
+      ]
+    },
+    {
+      "name": "Buildings, Cities & Urban Systems",
+      "subtopics": [
+        "Building energy efficiency and electrification",
+        "Net-zero construction and resilient building design",
+        "Resilient and sustainable urban design",
+        "Waste, circular economy, and single-use materials"
+      ]
+    },
+    {
+      "name": "Climate Governance Frameworks & Accountability Mechanisms",
+      "subtopics": [
+        "International agreements and climate negotiations",
+        "National and subnational climate legislation & regulation",
+        "Youth and community participation in climate decision-making"
+      ]
+    },
+    {
+      "name": "Climate Justice & Equity",
+      "subtopics": [
+        "Access to climate education, information, and training",
+        "Climate migration and displacement",
+        "Frontline and vulnerable communities",
+        "Global north-south equity",
+        "Indigenous rights and knowledge",
+        "Just transition for workers"
+      ]
+    },
+    {
+      "name": "Disaster Response & Preparedness",
+      "subtopics": [
+        "Disaster response and recovery",
+        "Health impacts",
+        "Preparing for drought and inland extreme weather",
+        "Preparing for sea level rise and coastal extreme weather"
       ]
     },
     {
       "name": "Energy Decarbonization",
       "subtopics": [
-        "Phasing out fossil fuels in energy systems"
+        "Critical minerals and clean energy supply chains",
+        "Electrification of industry",
+        "Phasing out fossil fuels in energy systems",
+        "Renewable energy deployment and grid modernization"
+      ]
+    },
+    {
+      "name": "Finance & Economics",
+      "subtopics": [
+        "Carbon pricing and market mechanisms",
+        "Climate risk disclosure and financial regulation",
+        "Funding adaptation and mitigation",
+        "Green investment and fossil fuel divestment"
+      ]
+    },
+    {
+      "name": "Forests, Oceans, Land Use & Nature-based Solutions",
+      "subtopics": [
+        "Deforestation, reforestation, and forest ecosystems",
+        "Ocean stewardship and marine ecosystems",
+        "Water resources management",
+        "Wetlands, grasslands, and coastal ecosystems"
+      ]
+    },
+    {
+      "name": "Hard-to-Abate Industries",
+      "subtopics": [
+        "Aviation",
+        "Military and defense",
+        "Mining",
+        "Petrochemicals and plastics feedstocks",
+        "Steel and cement"
+      ]
+    },
+    {
+      "name": "Technology, Data & Innovation",
+      "subtopics": [
+        "Breakthrough R&D and emerging technologies",
+        "Carbon removal and negative emissions technologies",
+        "Climate data, monitoring, and citizen science"
       ]
     },
     {
