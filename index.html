@@ -18,33 +18,35 @@
 
       <div class="content">
         <aside class="sidebar">
-          <h2>Options</h2>
+          <details class="sidebar-panel" open>
+            <summary class="sidebar-summary">Options</summary>
 
-          <details class="control" open>
-            <summary class="filter-header">View level</summary>
-            <div class="view-level-selector" id="viewLevelSelector">
-              <button class="view-level-btn active" data-view="skim">Skim</button>
-              <button class="view-level-btn" data-view="peruse">Peruse</button>
-              <button class="view-level-btn" data-view="deep-dive">Deep Dive</button>
-            </div>
-          </details>
+            <details class="control" open>
+              <summary class="filter-header">View level</summary>
+              <div class="view-level-selector" id="viewLevelSelector">
+                <button class="view-level-btn active" data-view="skim">Skim</button>
+                <button class="view-level-btn" data-view="peruse">Peruse</button>
+                <button class="view-level-btn" data-view="deep-dive">Deep Dive</button>
+              </div>
+            </details>
 
-          <details class="control" open>
-            <summary class="filter-header">Group cards by</summary>
-            <select id="groupBy">
-              <option value="scope">Scope</option>
-              <option value="issueAreas">Topic</option>
-            </select>
-          </details>
+            <details class="control" open>
+              <summary class="filter-header">Group cards by</summary>
+              <select id="groupBy">
+                <option value="scope">Scope</option>
+                <option value="issueAreas">Topic</option>
+              </select>
+            </details>
 
-          <details class="control" open>
-            <summary class="filter-header">Filter by scope</summary>
-            <select id="filterScope"></select>
-          </details>
+            <details class="control" open>
+              <summary class="filter-header">Filter by scope</summary>
+              <select id="filterScope"></select>
+            </details>
 
-          <details class="control" open>
-            <summary class="filter-header">Filter by topic/subtopic</summary>
-            <div id="topicSubtopicFilter" class="topic-filter"></div>
+            <details class="control" open>
+              <summary class="filter-header">Filter by topic/subtopic</summary>
+              <div id="topicSubtopicFilter" class="topic-filter"></div>
+            </details>
           </details>
         </aside>
 
@@ -63,7 +65,7 @@
         </main>
       </div>
 
-      <footer>Built from Airtable</footer>
+      <footer>Built by Dr. Torsten Maier</footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -408,7 +410,7 @@
             `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="skim" title="Collapse to Skim">▲</button>` +
             `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="deep-dive" title="Expand to Deep Dive">▼</button>`;
         } else if (cardView === 'deep-dive') {
-          expandButtons = `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="peruse" title="Collapse to Peruse">▼</button>`;
+          expandButtons = `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="peruse" title="Collapse to Peruse">▲</button>`;
         }
 
         return `<article class="card" data-policy-id="${policyId}" data-view="${escapeHtml(cardView)}">
