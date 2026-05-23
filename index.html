@@ -408,7 +408,7 @@
           expandButtons = `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="peruse" title="Collapse to Peruse">▼</button>`;
         }
 
-        return `<article class="card" data-policy-id="${policyId}" data-view="${cardView}">
+        return `<article class="card" data-policy-id="${policyId}" data-view="${escapeHtml(cardView)}">
       <div class="card-header">
         <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
         <h4 class="card-title">${policyId}</h4>
@@ -836,11 +836,13 @@
         });
 
         // Card expand/collapse delegation
+        const VALID_VIEW_MODES = new Set(['skim', 'peruse', 'deep-dive']);
         els.policyGroups.addEventListener('click', (event) => {
           const btn = event.target.closest('.card-expand-btn');
           if (!btn) return;
           const policyId = btn.getAttribute('data-policy-id');
           const target = btn.getAttribute('data-target');
+          if (!VALID_VIEW_MODES.has(target)) return;
           state.cardViewLevels.set(policyId, target);
           const policy = state.policies.find((p) => p.id === policyId);
           const cardEl = els.policyGroups.querySelector(`.card[data-policy-id="${CSS.escape(policyId)}"]`);
