@@ -232,5 +232,28 @@ window.NYS_BUILDER_DATA = {
         "Actions": ""
       }
     }
+  ],
+  "topics": [
+    {
+      "name": "Agriculture & Food Systems",
+      "subtopics": [
+        "Electrification of industry",
+        "Reducing food waste across the supply chain"
+      ]
+    },
+    {
+      "name": "Energy Decarbonization",
+      "subtopics": [
+        "Phasing out fossil fuels in energy systems"
+      ]
+    },
+    {
+      "name": "Transportation & Mobility",
+      "subtopics": [
+        "Electric vehicles and charging infrastructure",
+        "Freight and logistics decarbonization",
+        "Public transit, cycling, walking"
+      ]
+    }
   ]
 };

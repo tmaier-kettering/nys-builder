@@ -388,6 +388,23 @@ function buildOutputData(recordsByTable, namedTables) {
     })
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  // Build topics hierarchy: [{name, subtopics: [name]}]
+  const topicSubtopicsMap = new Map();
+  for (const [topicId, topicName] of sourceMaps.topicsById) {
+    topicSubtopicsMap.set(topicId, { name: String(topicName), subtopics: [] });
+  }
+  for (const [, subtopic] of sourceMaps.subtopicsById) {
+    if (!subtopic.name) continue;
+    for (const topicId of subtopic.topicIds) {
+      const topicEntry = topicSubtopicsMap.get(topicId);
+      if (topicEntry) topicEntry.subtopics.push(String(subtopic.name));
+    }
+  }
+  const topicsList = [...topicSubtopicsMap.values()]
+    .filter((t) => t.name)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((t) => ({ name: t.name, subtopics: t.subtopics.sort((a, b) => a.localeCompare(b)) }));
+
   return {
     metadata: {
       generatedAt: new Date().toISOString(),
@@ -397,7 +414,8 @@ function buildOutputData(recordsByTable, namedTables) {
       policyColumns: (policyTable.fields || []).map((field) => field.name)
     },
     actions: actionList,
-    policies: policyList
+    policies: policyList,
+    topics: topicsList
   };
 }
 

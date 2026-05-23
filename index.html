@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="feedback-btn" href="https://github.com/tmaier-kettering/nys-builder/issues/new" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
     <div class="page">
       <h1>NYS Builder Policy Explorer</h1>
       <p class="subtitle">Browse, group, filter, and export policy recommendations.</p>
@@ -15,34 +16,33 @@
       <div class="content">
         <aside class="sidebar">
           <h2>Options</h2>
-          <div class="control">
-            <label for="viewMode">View level</label>
-            <select id="viewMode">
-              <option value="skim">Skim</option>
-              <option value="peruse">Peruse</option>
-              <option value="deep-dive">Deep Dive</option>
-            </select>
-          </div>
-          <div class="control">
-            <label for="groupBy">Group cards by</label>
+
+          <details class="control" open>
+            <summary class="filter-header">View level</summary>
+            <div class="view-level-selector" id="viewLevelSelector">
+              <button class="view-level-btn active" data-view="skim">Skim</button>
+              <button class="view-level-btn" data-view="peruse">Peruse</button>
+              <button class="view-level-btn" data-view="deep-dive">Deep Dive</button>
+            </div>
+          </details>
+
+          <details class="control" open>
+            <summary class="filter-header">Group cards by</summary>
             <select id="groupBy">
               <option value="scope">Scope</option>
-              <option value="type">Type</option>
-              <option value="issueAreas">Issue Areas</option>
+              <option value="issueAreas">Topic</option>
             </select>
-          </div>
-          <div class="control">
-            <label for="filterScope">Filter by scope</label>
+          </details>
+
+          <details class="control" open>
+            <summary class="filter-header">Filter by scope</summary>
             <select id="filterScope"></select>
-          </div>
-          <div class="control">
-            <label for="filterType">Filter by type</label>
-            <select id="filterType"></select>
-          </div>
-          <div class="control">
-            <label for="filterIssueArea">Filter by issue area</label>
-            <select id="filterIssueArea"></select>
-          </div>
+          </details>
+
+          <details class="control" open>
+            <summary class="filter-header">Filter by topic/subtopic</summary>
+            <div id="topicSubtopicFilter" class="topic-filter"></div>
+          </details>
         </aside>
 
         <main class="main">
@@ -67,11 +67,10 @@
     <script src="./data.js"></script>
     <script>
       const els = {
-        viewMode: document.getElementById('viewMode'),
+        viewLevelSelector: document.getElementById('viewLevelSelector'),
         groupBy: document.getElementById('groupBy'),
         filterScope: document.getElementById('filterScope'),
-        filterType: document.getElementById('filterType'),
-        filterIssueArea: document.getElementById('filterIssueArea'),
+        topicSubtopicFilter: document.getElementById('topicSubtopicFilter'),
         selectAllVisible: document.getElementById('selectAllVisible'),
         shareBtn: document.getElementById('shareBtn'),
         pdfBtn: document.getElementById('pdfBtn'),
@@ -84,8 +83,13 @@
         actionsById: new Map(),
         selectedPolicyIds: new Set(),
         visiblePolicyIds: [],
-        onlySelectedFromLink: false
+        onlySelectedFromLink: false,
+        viewMode: 'skim',
+        cardViewLevels: new Map(),
+        topicSubtopicFilter: new Set(),
+        topicsData: []
       };
+
       const MISSING_ACTION_LABEL = '(not found)';
       const PDF_FILE_PREFIX = 'selected-policies';
       const PDF_PAGE_MARGIN = 40;
@@ -107,27 +111,30 @@
         ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
       const sourceData = window.NYS_BUILDER_DATA || {};
 
-      const HIDDEN_CARD_COLUMNS = ['#', 'Policy ID', 'ID', 'Policy Identifier'];
+      // Columns never shown on cards (identifiers, status, admin fields)
+      const HIDDEN_CARD_COLUMNS = ['#', 'Policy ID', 'ID', 'Policy Identifier', 'Approval Status', 'Archived', 'Type'];
+      const HIDDEN_CARD_COLUMNS_SET = new Set(HIDDEN_CARD_COLUMNS);
 
+      // Fields shown as chips at the bottom of every card (not as regular fields)
+      const CHIP_FIELDS = ['Scope', 'Jurisdiction', 'UNFCCC pillar', 'Topic', 'Subtopic', 'Draft Year'];
+      const CHIP_FIELDS_SET = new Set(CHIP_FIELDS);
+
+      // Combined set for card body exclusion
+      const CARD_BODY_EXCLUDED = new Set([...HIDDEN_CARD_COLUMNS_SET, ...CHIP_FIELDS_SET]);
+
+      // Regular fields shown per view level in the card body (chip fields shown separately)
       const CARD_COLUMNS_BY_VIEW = {
-        skim: [
-          'Policy'
-        ],
-        peruse: [
-          'Policy',
-          'Scope',
-          'Jurisdiction',
-          'Type',
-          'UNFCCC pillar',
-          'Topic',
-          'Subtopic',
-          'Commentary',
-          'Draft Year',
-          'Approval Status'
-        ],
+        skim: ['Policy'],
+        peruse: ['Policy', 'Commentary'],
         'deep-dive': 'ALL'
       };
 
+      // Fields shown per view level in the PDF (includes chip fields as plain text)
+      const PDF_COLUMNS_BY_VIEW = {
+        skim: ['Policy'],
+        peruse: ['Policy', 'Scope', 'Jurisdiction', 'UNFCCC pillar', 'Topic', 'Subtopic', 'Commentary', 'Draft Year'],
+        'deep-dive': 'ALL'
+      };
 
       function splitMulti(value) {
         return (value || '')
@@ -185,7 +192,7 @@
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const today = `${year}-${month}-${day}`;
-        return `${PDF_FILE_PREFIX}-${els.viewMode.value}-${today}.pdf`;
+        return `${PDF_FILE_PREFIX}-${state.viewMode}-${today}.pdf`;
       }
 
       function buildFilterOptions(values) {
@@ -310,13 +317,26 @@
         }
       }
 
+      function asArrayValues(value) {
+        if (Array.isArray(value)) return value.filter(Boolean).map(String);
+        if (!value) return [];
+        return [String(value)].filter(Boolean);
+      }
+
       function getFilteredPolicies() {
         let filtered = state.policies.filter((policy) => {
           const scopePass = els.filterScope.value === 'All' || policy.scope === els.filterScope.value;
-          const typePass = els.filterType.value === 'All' || policy.type === els.filterType.value;
-          const issuePass =
-            els.filterIssueArea.value === 'All' || policy.issueAreas.includes(els.filterIssueArea.value);
-          return scopePass && typePass && issuePass;
+
+          let topicPass = true;
+          if (state.topicSubtopicFilter.size > 0) {
+            const policyTopics = asArrayValues(policy.columns?.['Topic']);
+            const policySubtopics = asArrayValues(policy.columns?.['Subtopic']);
+            topicPass =
+              policyTopics.some((t) => state.topicSubtopicFilter.has(t)) ||
+              policySubtopics.some((s) => state.topicSubtopicFilter.has(s));
+          }
+
+          return scopePass && topicPass;
         });
 
         if (state.onlySelectedFromLink) {
@@ -345,34 +365,58 @@
         return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
       }
 
-      function cardHtml(policy) {
-  const policyId = escapeHtml(policy.id);
-  const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
-  const viewMode = els.viewMode.value;
+      function chipClass(fieldName) {
+        return 'chip chip-' + fieldName.toLowerCase().replace(/[\s/]+/g, '-').replace(/[^a-z0-9-]/g, '');
+      }
 
-  const configuredColumns = CARD_COLUMNS_BY_VIEW[viewMode] || CARD_COLUMNS_BY_VIEW.skim;
-  const allowedColumns =
-    configuredColumns === 'ALL'
-      ? state.policyColumns.filter((columnName) => !HIDDEN_CARD_COLUMNS.includes(columnName))
-      : configuredColumns;
+      function cardHtml(policy, viewMode) {
+        const policyId = escapeHtml(policy.id);
+        const checked = state.selectedPolicyIds.has(policy.id) ? 'checked' : '';
+        const cardView = viewMode || state.viewMode;
 
-  const allPolicyColumns = state.policyColumns
-    .filter((columnName) => allowedColumns.includes(columnName))
-    .map((columnName) => [columnName, policy.columns?.[columnName]])
-    .filter(([columnName, value]) => columnName && formatFieldValue(value))
-    .map(([columnName, value]) => renderField(columnName, value))
-    .join('');
+        const configuredColumns = CARD_COLUMNS_BY_VIEW[cardView] || CARD_COLUMNS_BY_VIEW.skim;
+        const bodyColumns =
+          configuredColumns === 'ALL'
+            ? state.policyColumns.filter((col) => !CARD_BODY_EXCLUDED.has(col))
+            : configuredColumns.filter((col) => state.policyColumns.includes(col));
 
-  return `
-    <article class="card" data-policy-id="${policyId}">
+        const regularFields = bodyColumns
+          .map((col) => [col, policy.columns?.[col]])
+          .filter(([, value]) => formatFieldValue(value))
+          .map(([col, value]) => renderField(col, value))
+          .join('');
+
+        // Chips: always shown at bottom of every card
+        const chips = CHIP_FIELDS.flatMap((fieldName) => {
+          const value = policy.columns?.[fieldName];
+          if (!value) return [];
+          const values = Array.isArray(value) ? value : [String(value)];
+          return values
+            .filter(Boolean)
+            .map((v) => `<span class="${chipClass(fieldName)}">${escapeHtml(String(v))}</span>`);
+        }).join('');
+
+        // Expand/collapse buttons on the right of the card header
+        let expandButtons = '';
+        if (cardView === 'skim') {
+          expandButtons = `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="peruse" title="Expand to Peruse">▼</button>`;
+        } else if (cardView === 'peruse') {
+          expandButtons =
+            `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="skim" title="Collapse to Skim">▲</button>` +
+            `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="deep-dive" title="Expand to Deep Dive">▼</button>`;
+        } else if (cardView === 'deep-dive') {
+          expandButtons = `<button class="card-expand-btn" data-policy-id="${policyId}" data-target="peruse" title="Collapse to Peruse">▼</button>`;
+        }
+
+        return `<article class="card" data-policy-id="${policyId}" data-view="${escapeHtml(cardView)}">
       <div class="card-header">
         <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
         <h4 class="card-title">${policyId}</h4>
+        <div class="card-expand-controls">${expandButtons}</div>
       </div>
-      ${allPolicyColumns}
-    </article>
-  `;
-}
+      ${regularFields}${chips ? `<div class="card-chips">${chips}</div>` : ''}
+    </article>`;
+      }
 
       function updateSelectAllVisible() {
         const ids = state.visiblePolicyIds;
@@ -404,26 +448,84 @@
               <section class="group">
                 <h3>${escapeHtml(title)}</h3>
                 <div class="cards">
-                  ${policies.map(cardHtml).join('')}
+                  ${policies.map((p) => cardHtml(p, state.cardViewLevels.get(p.id) || state.viewMode)).join('')}
                 </div>
               </section>
             `
           )
           .join('');
 
-        document.querySelectorAll('.card-checkbox').forEach((checkbox) => {
-          checkbox.addEventListener('change', (event) => {
-            const id = event.target.getAttribute('data-policy-id');
-            if (event.target.checked) {
-              state.selectedPolicyIds.add(id);
-            } else {
-              state.selectedPolicyIds.delete(id);
-            }
-            updateSelectAllVisible();
-          });
-        });
-
         updateSelectAllVisible();
+      }
+
+      function renderTopicFilter() {
+        const container = els.topicSubtopicFilter;
+        container.innerHTML = '';
+
+        state.topicsData.forEach((topic) => {
+          const topicWrapper = document.createElement('div');
+          topicWrapper.className = 'topic-item';
+
+          const allSubChecked =
+            topic.subtopics.length > 0 &&
+            topic.subtopics.every((s) => state.topicSubtopicFilter.has(s));
+          const someSubChecked = topic.subtopics.some((s) => state.topicSubtopicFilter.has(s));
+          const topicIndeterminate = !allSubChecked && someSubChecked;
+
+          const topicLabel = document.createElement('label');
+          topicLabel.className = 'topic-label';
+
+          const topicCheckbox = document.createElement('input');
+          topicCheckbox.type = 'checkbox';
+          topicCheckbox.className = 'topic-checkbox';
+          topicCheckbox.checked = allSubChecked;
+          topicCheckbox.indeterminate = topicIndeterminate;
+
+          topicCheckbox.addEventListener('change', () => {
+            if (topicCheckbox.checked) {
+              topic.subtopics.forEach((s) => state.topicSubtopicFilter.add(s));
+            } else {
+              topic.subtopics.forEach((s) => state.topicSubtopicFilter.delete(s));
+            }
+            renderTopicFilter();
+            render();
+          });
+
+          topicLabel.append(topicCheckbox, document.createTextNode('\u00a0' + topic.name));
+          topicWrapper.appendChild(topicLabel);
+
+          if (topic.subtopics.length > 0) {
+            const subtopicList = document.createElement('div');
+            subtopicList.className = 'subtopic-list';
+
+            topic.subtopics.forEach((subtopicName) => {
+              const subLabel = document.createElement('label');
+              subLabel.className = 'subtopic-label';
+
+              const subCheckbox = document.createElement('input');
+              subCheckbox.type = 'checkbox';
+              subCheckbox.className = 'subtopic-checkbox';
+              subCheckbox.checked = state.topicSubtopicFilter.has(subtopicName);
+
+              subCheckbox.addEventListener('change', () => {
+                if (subCheckbox.checked) {
+                  state.topicSubtopicFilter.add(subtopicName);
+                } else {
+                  state.topicSubtopicFilter.delete(subtopicName);
+                }
+                renderTopicFilter();
+                render();
+              });
+
+              subLabel.append(subCheckbox, document.createTextNode('\u00a0' + subtopicName));
+              subtopicList.appendChild(subLabel);
+            });
+
+            topicWrapper.appendChild(subtopicList);
+          }
+
+          container.appendChild(topicWrapper);
+        });
       }
 
       function copyShareLink() {
@@ -433,7 +535,7 @@
         }
 
         const url = new URL(window.location.href);
-        url.searchParams.set('view', els.viewMode.value);
+        url.searchParams.set('view', state.viewMode);
         url.searchParams.set('selected', [...state.selectedPolicyIds].join(','));
         url.searchParams.set('onlySelected', '1');
 
@@ -567,9 +669,15 @@
             cursorY -= spacingAfter;
           };
 
-          writeWrapped('Selected Policies', { bold: true, fontSize: 16 });
-          writeWrapped(`View mode: ${formatPdfValue(els.viewMode.value)}`);
-          writeWrapped(`Grouped by: ${formatPdfValue(els.groupBy.value)}`, { spacingAfter: 6 });
+          writeWrapped('Selected Policies', { bold: true, fontSize: 16, spacingAfter: 6 });
+
+          // Determine which columns to include based on the current view level
+          const pdfViewMode = state.viewMode;
+          const pdfConfiguredColumns = PDF_COLUMNS_BY_VIEW[pdfViewMode] || PDF_COLUMNS_BY_VIEW.skim;
+          const orderedPdfCols =
+            pdfConfiguredColumns === 'ALL'
+              ? state.policyColumns.filter((col) => !HIDDEN_CARD_COLUMNS_SET.has(col))
+              : state.policyColumns.filter((col) => pdfConfiguredColumns.includes(col));
 
           grouped.forEach(([title, policies]) => {
             ensureSpace(PDF_LINE_HEIGHT * 3);
@@ -579,26 +687,12 @@
             writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
 
             policies.forEach((policy) => {
-              const showCommentary = ['peruse', 'deep-dive'].includes(els.viewMode.value);
-              const showActions = els.viewMode.value === 'deep-dive';
-              const actionTitles = policy.actionIds.map(
-                (id) => state.actionsById.get(id) || `${id} ${MISSING_ACTION_LABEL}`
-              );
-              const fields = [
-                ['Policy', policy.policyText],
-                ['Scope', policy.scope],
-                ['Type', policy.type],
-                ['Issue Areas', policy.issueAreas.join(', ')],
-                ...(showCommentary ? [['Commentary', policy.commentary]] : []),
-                ...(showActions ? [['Related Actions', actionTitles.join('; ')]] : []),
-                ...state.policyColumns
-                  .filter((columnName) => columnName && columnName !== '#')
-                  .map((columnName) => [columnName, formatFieldValue(policy.columns?.[columnName])])
-              ];
-
               writeWrapped(formatPdfValue(policy.id), { bold: true, fontSize: 12 });
-              fields.forEach(([label, value]) => {
-                writeWrapped(`${label}: ${formatPdfValue(value)}`, { indent: 10 });
+              orderedPdfCols.forEach((col) => {
+                const value = formatFieldValue(policy.columns?.[col]);
+                if (value) {
+                  writeWrapped(`${col}: ${formatPdfValue(value)}`, { indent: 10 });
+                }
               });
               cursorY -= 8;
             });
@@ -694,15 +788,29 @@
         }
       }
 
-      function bindEvents() {
-        [
-          els.viewMode,
-          els.groupBy,
-          els.filterScope,
-          els.filterType,
-          els.filterIssueArea
-        ].forEach((el) => el.addEventListener('change', render));
+      function setViewMode(view) {
+        state.viewMode = view;
+        els.viewLevelSelector.querySelectorAll('.view-level-btn').forEach((b) => {
+          b.classList.toggle('active', b.getAttribute('data-view') === view);
+        });
+      }
 
+      function bindEvents() {
+        // View level text buttons
+        els.viewLevelSelector.querySelectorAll('.view-level-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const newView = btn.getAttribute('data-view');
+            if (newView === state.viewMode) return;
+            setViewMode(newView);
+            state.cardViewLevels.clear();
+            render();
+          });
+        });
+
+        // Group by and scope filter
+        [els.groupBy, els.filterScope].forEach((el) => el.addEventListener('change', render));
+
+        // Select all visible
         els.selectAllVisible.addEventListener('change', (event) => {
           state.visiblePolicyIds.forEach((id) => {
             if (event.target.checked) {
@@ -714,6 +822,38 @@
           render();
         });
 
+        // Card checkbox delegation
+        els.policyGroups.addEventListener('change', (event) => {
+          const checkbox = event.target.closest('.card-checkbox');
+          if (!checkbox) return;
+          const id = checkbox.getAttribute('data-policy-id');
+          if (checkbox.checked) {
+            state.selectedPolicyIds.add(id);
+          } else {
+            state.selectedPolicyIds.delete(id);
+          }
+          updateSelectAllVisible();
+        });
+
+        // Card expand/collapse delegation
+        const VALID_VIEW_MODES = new Set(['skim', 'peruse', 'deep-dive']);
+        els.policyGroups.addEventListener('click', (event) => {
+          const btn = event.target.closest('.card-expand-btn');
+          if (!btn) return;
+          const policyId = btn.getAttribute('data-policy-id');
+          const target = btn.getAttribute('data-target');
+          if (!VALID_VIEW_MODES.has(target)) return;
+          state.cardViewLevels.set(policyId, target);
+          const policy = state.policies.find((p) => p.id === policyId);
+          const cardEl = els.policyGroups.querySelector(`.card[data-policy-id="${CSS.escape(policyId)}"]`);
+          if (policy && cardEl) {
+            const temp = document.createElement('div');
+            temp.innerHTML = cardHtml(policy, target);
+            const newCard = temp.firstElementChild;
+            if (newCard) cardEl.replaceWith(newCard);
+          }
+        });
+
         els.shareBtn.addEventListener('click', copyShareLink);
         els.pdfBtn.addEventListener('click', downloadPdf);
       }
@@ -723,7 +863,7 @@
 
         const view = params.get('view');
         if (['skim', 'peruse', 'deep-dive'].includes(view)) {
-          els.viewMode.value = view;
+          setViewMode(view);
         }
 
         const selected = splitMulti(params.get('selected'));
@@ -747,7 +887,7 @@
           ? sourceData.metadata.policyColumns.map((name) => String(name || '').trim()).filter(Boolean)
           : [];
 
-        state.policies = policies.map((policy) => ({
+        const allPolicies = policies.map((policy) => ({
           id: String(policy.id || '').trim(),
           policyText: policy.policyText || '',
           scope: policy.scope || '',
@@ -765,16 +905,44 @@
               : {}
         }));
 
+        // Only display policies with Approval Status = "Approved"
+        state.policies = allPolicies.filter(
+          (policy) => policy.columns?.['Approval Status'] === 'Approved'
+        );
+
         const derivedPolicyColumns = [...new Set(state.policies.flatMap((policy) => Object.keys(policy.columns)))];
         state.policyColumns = [...new Set([...metadataPolicyColumns, ...derivedPolicyColumns])];
 
-        setSelectOptions(els.filterScope, buildFilterOptions(state.policies.map((p) => p.scope)));
-        setSelectOptions(els.filterType, buildFilterOptions(state.policies.map((p) => p.type)));
-        setSelectOptions(
-          els.filterIssueArea,
-          buildFilterOptions(state.policies.flatMap((p) => p.issueAreas))
-        );
+        // Load topics/subtopics hierarchy
+        if (Array.isArray(sourceData.topics) && sourceData.topics.length > 0) {
+          state.topicsData = sourceData.topics
+            .map((topic) => ({
+              name: String(topic.name || '').trim(),
+              subtopics: Array.isArray(topic.subtopics)
+                ? topic.subtopics.map((s) => String(s || '').trim()).filter(Boolean)
+                : []
+            }))
+            .filter((t) => t.name)
+            .sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+          // Derive hierarchy from approved policy data as fallback
+          const topicSubtopicMap = new Map();
+          state.policies.forEach((policy) => {
+            const policyTopics = asArrayValues(policy.columns?.['Topic']);
+            const policySubtopics = asArrayValues(policy.columns?.['Subtopic']);
+            policyTopics.forEach((topic) => {
+              if (!topicSubtopicMap.has(topic)) topicSubtopicMap.set(topic, new Set());
+              policySubtopics.forEach((sub) => topicSubtopicMap.get(topic).add(sub));
+            });
+          });
+          state.topicsData = [...topicSubtopicMap.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([name, subs]) => ({ name, subtopics: [...subs].sort() }));
+        }
 
+        setSelectOptions(els.filterScope, buildFilterOptions(state.policies.map((p) => p.scope)));
+
+        renderTopicFilter();
         initializeFromQuery();
         bindEvents();
         render();

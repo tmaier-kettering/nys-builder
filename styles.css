@@ -314,3 +314,262 @@ footer {
     scroll-behavior: auto;
   }
 }
+
+/* ── Persistent feedback button ─────────────────────────────── */
+.feedback-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 200;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-soft);
+  transition:
+    background-color var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) ease;
+}
+
+.feedback-btn:hover {
+  background: var(--color-primary-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ── Collapsible filter sections ────────────────────────────── */
+details.control {
+  margin-bottom: 0.85rem;
+}
+
+details.control > summary.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  margin-bottom: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 0.2rem 0;
+}
+
+details.control > summary.filter-header::-webkit-details-marker {
+  display: none;
+}
+
+details.control > summary.filter-header::after {
+  content: '▾';
+  font-size: 0.8rem;
+  transition: transform var(--duration-fast) ease;
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+}
+
+details.control[open] > summary.filter-header::after {
+  transform: rotate(180deg);
+}
+
+details.control > summary.filter-header + * {
+  margin-top: 0.45rem;
+}
+
+/* ── View level text selector ───────────────────────────────── */
+.view-level-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.view-level-btn {
+  all: unset;
+  display: block;
+  padding: 0.38rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.view-level-btn:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+.view-level-btn.active {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.view-level-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* ── Card header with expand controls ──────────────────────── */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.card-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.card-expand-controls {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  margin-top: -0.1rem;
+}
+
+.card-expand-btn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.card-expand-btn:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  transform: scale(1.15);
+}
+
+.card-expand-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* ── Colored chips ──────────────────────────────────────────── */
+.card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.chip-scope {
+  background: color-mix(in srgb, #0e6eff 13%, transparent);
+  color: #0044bb;
+}
+
+.chip-jurisdiction {
+  background: color-mix(in srgb, #22a05a 13%, transparent);
+  color: #166b3c;
+}
+
+.chip-unfccc-pillar {
+  background: color-mix(in srgb, #8b5cf6 13%, transparent);
+  color: #5b21b6;
+}
+
+.chip-topic {
+  background: color-mix(in srgb, #f97316 13%, transparent);
+  color: #b84200;
+}
+
+.chip-subtopic {
+  background: color-mix(in srgb, #24b3a7 14%, transparent);
+  color: #0e7c72;
+}
+
+.chip-draft-year {
+  background: color-mix(in srgb, #64748b 13%, transparent);
+  color: #334155;
+}
+
+/* ── Topic/subtopic filter tree ─────────────────────────────── */
+.topic-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.topic-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.topic-label,
+.subtopic-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-size: 0.86rem;
+  cursor: pointer;
+  padding: 0.12rem 0.2rem;
+  border-radius: 6px;
+  transition: background-color var(--duration-fast) ease;
+  line-height: 1.4;
+}
+
+.topic-label {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.topic-label:hover,
+.subtopic-label:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.subtopic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 1.3rem;
+}
+
+.subtopic-label {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.topic-checkbox,
+.subtopic-checkbox {
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  margin: 0;
+}
