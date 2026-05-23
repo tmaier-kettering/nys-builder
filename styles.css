@@ -328,9 +328,9 @@ footer {
 
 /* ── Persistent feedback button ─────────────────────────────── */
 .feedback-btn {
-  position: fixed;
+  position: absolute;
   top: 1rem;
-  right: 1rem;
+  right: clamp(1rem, 2.5vw, 2rem);
   z-index: 200;
   padding: 0.45rem 0.9rem;
   border-radius: var(--radius-sm);
@@ -340,11 +340,6 @@ footer {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
-  box-shadow: var(--shadow-soft);
-  transition:
-    background-color var(--duration-fast) ease,
-    transform var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) ease;
 }
 
 .feedback-btn:hover {
