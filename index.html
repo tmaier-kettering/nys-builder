@@ -416,7 +416,6 @@
         return `<article class="card" data-policy-id="${policyId}" data-view="${escapeHtml(cardView)}">
       <div class="card-header">
         <input class="card-checkbox" type="checkbox" data-policy-id="${policyId}" ${checked} />
-        <h4 class="card-title">${policyId}</h4>
         <div class="card-expand-controls">${expandButtons}</div>
       </div>
       ${regularFields}${chips ? `<div class="card-chips">${chips}</div>` : ''}
