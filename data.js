@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-05-24T08:07:14.688Z",
+    "generatedAt": "2026-05-24T10:05:56.328Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
