@@ -252,43 +252,17 @@ function normalizeFieldValue(value, fieldDefinition, recordNamesByTableId, named
   return toText(value);
 }
 
-function normalizeAction(record) {
-  const fields = record.fields || {};
-  const title = String(
-    pickFirstField(fields, ['Action Title', 'Action', 'Name', 'Title', 'Policy Action']) || 'Untitled Action'
-  ).trim();
-
-  const policyRecordIds = asArray(pickFirstField(fields, ['Policy', 'Policies', 'Related Policies']));
-
-  return {
-    recordId: record.id,
-    id: String(pickFirstField(fields, ['#', 'Action ID', 'ID']) || record.id).trim(),
-    title,
-    policyRecordIds
-  };
-}
-
-function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables) {
-  const fields = record.fields || {};
-  const policyColumns = {};
-
-  for (const field of policyTable.fields || []) {
-    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
-  }
-
-  const policyRecordTopicIds = asArray(pickFirstField(fields, ['Topic', 'Topics']));
-  const policyRecordSubtopicIds = asArray(pickFirstField(fields, ['Subtopic', 'Subtopics']));
-  const policyRecordScopeIds = asArray(pickFirstField(fields, ['Scope', 'Scopes']));
-  const policyRecordJurisdictionIds = asArray(pickFirstField(fields, ['Jurisdiction', 'Jurisdictions']));
-  const policyRecordActionIds = asArray(pickFirstField(fields, ['Actions', 'Action']));
-
+function getResolvedTopicNames(fields, sourceMaps) {
+  const topicRecordIds = asArray(pickFirstField(fields, ['Topic', 'Topics']));
+  const subtopicRecordIds = asArray(pickFirstField(fields, ['Subtopic', 'Subtopics']));
   const topicNames = new Set();
-  for (const topicId of policyRecordTopicIds) {
+
+  for (const topicId of topicRecordIds) {
     const topic = sourceMaps.topicsById.get(topicId);
     if (topic) topicNames.add(String(topic));
   }
 
-  for (const subtopicId of policyRecordSubtopicIds) {
+  for (const subtopicId of subtopicRecordIds) {
     const subtopic = sourceMaps.subtopicsById.get(subtopicId);
     if (!subtopic) continue;
     if (subtopic.topicIds.length) {
@@ -302,13 +276,19 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, 
   }
 
   splitTextList(pickFirstField(fields, ['Issue Areas', 'Issue Area'])).forEach((name) => topicNames.add(name));
+  return topicNames;
+}
 
-  const scopeNames = policyRecordScopeIds
+function getResolvedScope(fields, sourceMaps) {
+  const scopeRecordIds = asArray(pickFirstField(fields, ['Scope', 'Scopes']));
+  const jurisdictionRecordIds = asArray(pickFirstField(fields, ['Jurisdiction', 'Jurisdictions']));
+
+  const scopeNames = scopeRecordIds
     .map((id) => sourceMaps.scopeById.get(id))
     .filter(Boolean)
     .map((value) => String(value));
 
-  const jurisdictionNames = policyRecordJurisdictionIds
+  const jurisdictionNames = jurisdictionRecordIds
     .map((id) => sourceMaps.jurisdictionById.get(id))
     .filter(Boolean)
     .map((value) => String(value));
@@ -316,14 +296,54 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, 
   const directScope = String(pickFirstField(fields, ['Scope', 'Policy Scope']) || '').trim();
   const directJurisdiction = String(pickFirstField(fields, ['Jurisdiction']) || '').trim();
 
-  const scope = [scopeNames.join(', '), jurisdictionNames.join(', '), directScope, directJurisdiction]
+  return [scopeNames.join(', '), jurisdictionNames.join(', '), directScope, directJurisdiction]
     .map((value) => String(value || '').trim())
-    .find(Boolean);
+    .find(Boolean) || '';
+}
+
+function normalizeAction(record, sourceMaps, actionTable, recordNamesByTableId, namedTables) {
+  const fields = record.fields || {};
+  const actionColumns = {};
+
+  for (const field of actionTable.fields || []) {
+    actionColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
+  }
+
+  const title = String(
+    pickFirstField(fields, ['Action Title', 'Action', 'Name', 'Title', 'Policy Action']) || 'Untitled Action'
+  ).trim();
+  const policyRecordIds = asArray(pickFirstField(fields, ['Policies', 'Policy', 'Related Policies']));
+  const topicNames = getResolvedTopicNames(fields, sourceMaps);
+  const scope = getResolvedScope(fields, sourceMaps);
+
+  return {
+    recordId: record.id,
+    id: String(pickFirstField(fields, ['Action Identifier', '#', 'Action ID', 'ID']) || record.id).trim(),
+    title,
+    scope,
+    issueAreas: [...topicNames].sort((a, b) => a.localeCompare(b)),
+    policyRecordIds,
+    columns: actionColumns
+  };
+}
+
+function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables) {
+  const fields = record.fields || {};
+  const policyColumns = {};
+
+  for (const field of policyTable.fields || []) {
+    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
+  }
+
+  const policyRecordActionIds = asArray(pickFirstField(fields, ['Actions', 'Action']));
+  const topicNames = getResolvedTopicNames(fields, sourceMaps);
+  const scope = getResolvedScope(fields, sourceMaps);
 
   return {
     recordId: record.id,
     id: String(
-  pickFirstField(fields, ['#', 'Policy ID', 'ID']) || getTableRecordName(record, policyTable) || record.id).trim(),
+      pickFirstField(fields, ['Policy Identifier', '#', 'Policy ID', 'ID']) || getTableRecordName(record, policyTable) || record.id
+    ).trim(),
     policyText: String(
       pickFirstField(fields, ['Policy', 'Policy Text', 'Full policy language', 'Recommendation']) || ''
     ).trim(),
@@ -340,8 +360,11 @@ function buildOutputData(recordsByTable, namedTables) {
   const sourceMaps = buildSourceMaps(recordsByTable, namedTables);
   const recordNamesByTableId = buildRecordNamesByTableId(recordsByTable, namedTables);
   const policyTable = namedTables.policies;
+  const actionTable = namedTables.actions;
 
-  const actions = recordsByTable.actions.map(normalizeAction);
+  const actions = recordsByTable.actions.map((record) =>
+    normalizeAction(record, sourceMaps, actionTable, recordNamesByTableId, namedTables)
+  );
   const policies = recordsByTable.policies.map((record) =>
     normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables)
   );
@@ -357,11 +380,34 @@ function buildOutputData(recordsByTable, namedTables) {
     }
   }
 
+  for (const policy of policies) {
+    for (const actionRecordId of policy.actionRecordIds) {
+      const action = actionByRecordId.get(actionRecordId);
+      if (!action) continue;
+      action.policyRecordIds.push(policy.recordId);
+    }
+  }
+
   const actionList = actions
-    .map((action) => ({
-      id: action.id,
-      title: action.title
-    }))
+    .map((action) => {
+      const linkedPolicyIds = [
+        ...new Set(
+          action.policyRecordIds
+            .map((policyRecordId) => policyByRecordId.get(policyRecordId))
+            .filter(Boolean)
+            .map((policy) => policy.id)
+        )
+      ];
+
+      return {
+        id: action.id,
+        title: action.title,
+        scope: action.scope,
+        issueAreas: action.issueAreas,
+        policyIds: linkedPolicyIds.sort((a, b) => a.localeCompare(b)),
+        columns: action.columns
+      };
+    })
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const policyList = policies
@@ -411,7 +457,8 @@ function buildOutputData(recordsByTable, namedTables) {
       source: 'Airtable',
       baseId,
       tables: REQUIRED_TABLES.map((name) => titleCase(name)),
-      policyColumns: (policyTable.fields || []).map((field) => field.name)
+      policyColumns: (policyTable.fields || []).map((field) => field.name),
+      actionColumns: (actionTable.fields || []).map((field) => field.name)
     },
     actions: actionList,
     policies: policyList,

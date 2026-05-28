@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NYS Builder Policies</title>
+    <title>NYS Builder Actions</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./theme.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body data-page="policies">
+  <body data-page="actions">
     <a class="feedback-btn" href="https://github.com/tmaier-kettering/nys-builder/issues/new" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
     <div class="page">
       <nav class="page-nav" aria-label="Primary">
-        <a class="page-nav-link active" href="./index.html" aria-current="page">Policies</a>
-        <a class="page-nav-link" href="./actions.html">Actions</a>
+        <a class="page-nav-link" href="./index.html">Policies</a>
+        <a class="page-nav-link active" href="./actions.html" aria-current="page">Actions</a>
       </nav>
-      <h1>NYS Builder Policy Explorer</h1>
-      <p class="subtitle">Browse, group, filter, and export approved policy recommendations.</p>
+      <h1>NYS Builder Action Explorer</h1>
+      <p class="subtitle">Browse, group, filter, and share approved actions.</p>
       <div class="search-row">
-        <label class="search-label" for="policySearch">Search policy text</label>
+        <label class="search-label" for="policySearch">Search action title</label>
         <input
           id="policySearch"
           type="search"
-          placeholder="Search within policy text..."
+          placeholder="Search within action titles..."
           autocomplete="off"
         />
       </div>
@@ -71,7 +71,6 @@
             </label>
             <div>
               <button id="shareBtn" type="button">Share selected view</button>
-              <button id="pdfBtn" type="button">Download selected PDF</button>
             </div>
           </div>
           <div id="policyGroups"></div>
@@ -81,7 +80,6 @@
       <footer>Built by Dr. Torsten Maier</footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="./data.js"></script>
     <script src="./app.js"></script>
   </body>
