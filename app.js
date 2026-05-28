@@ -374,7 +374,12 @@ function buildGroups(items) {
   const keyName = els.groupBy.value;
 
   items.forEach((item) => {
-    const keys = keyName === 'issueAreas' ? (item.issueAreas.length ? item.issueAreas : ['Unspecified']) : [item.scope || 'Unspecified'];
+    let keys;
+    if (keyName === 'issueAreas') {
+      keys = item.issueAreas.length ? item.issueAreas : ['Unspecified'];
+    } else {
+      keys = [item.scope || 'Unspecified'];
+    }
 
     keys.forEach((key) => {
       if (!groups.has(key)) groups.set(key, []);
@@ -394,17 +399,26 @@ function cardHtml(item, viewMode) {
   const checked = state.selectedIds.has(item.id) ? 'checked' : '';
   const cardView = viewMode || state.viewMode;
   const configuredColumns = pageConfig.cardColumnsByView[cardView] || pageConfig.cardColumnsByView.skim;
+  const availableColumns = new Set(state.itemColumns.map((column) => normalizeFieldName(column)));
   const bodyColumns =
     configuredColumns === 'ALL'
       ? state.itemColumns.filter((column) => !isHiddenColumn(column) && !isChipField(column))
-      : configuredColumns.filter((column) => state.itemColumns.some((existing) => normalizeFieldName(existing) === normalizeFieldName(column)));
+      : configuredColumns.filter((column) => availableColumns.has(normalizeFieldName(column)));
+
+  const seenColumns = new Set();
 
   const regularFields = bodyColumns
     .map((column) => {
       const actualColumn = getColumnKey(item.columns, column) || column;
       return [actualColumn, getColumnValue(item.columns, actualColumn)];
     })
-    .filter(([, value], index, entries) => formatFieldValue(value) && entries.findIndex(([column]) => normalizeFieldName(column) === normalizeFieldName(entries[index][0])) === index)
+    .filter(([column, value]) => {
+      if (!formatFieldValue(value)) return false;
+      const normalizedColumn = normalizeFieldName(column);
+      if (seenColumns.has(normalizedColumn)) return false;
+      seenColumns.add(normalizedColumn);
+      return true;
+    })
     .map(([column, value]) => renderField(column, value, item))
     .join('');
 
@@ -683,10 +697,13 @@ async function downloadPdf() {
     writeWrapped('Selected Policies', { bold: true, fontSize: 16, spacingAfter: 6 });
 
     const configuredColumns = pageConfig.pdfColumnsByView[state.viewMode] || pageConfig.pdfColumnsByView.skim;
+    const normalizedPdfColumns = new Set(
+      Array.isArray(configuredColumns) ? configuredColumns.map((column) => normalizeFieldName(column)) : []
+    );
     const orderedPdfColumns =
       configuredColumns === 'ALL'
         ? state.itemColumns.filter((column) => !isHiddenColumn(column))
-        : state.itemColumns.filter((column) => configuredColumns.some((configured) => normalizeFieldName(configured) === normalizeFieldName(column)));
+        : state.itemColumns.filter((column) => normalizedPdfColumns.has(normalizeFieldName(column)));
 
     grouped.forEach(([title, items]) => {
       ensureSpace(PDF_LINE_HEIGHT * 3);
