@@ -345,7 +345,7 @@ h1 {
   font-weight: var(--font-weight-semibold);
 }
 
-.policy-highlight {
+.search-highlight {
   background: color-mix(in srgb, var(--color-light-green) 70%, white);
   color: inherit;
   padding: 0 0.08em;

@@ -161,7 +161,7 @@ function highlightMatches(text, query) {
   const source = String(text ?? '');
   if (!query) return escapeHtml(source);
   const matcher = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-  return escapeHtml(source).replace(matcher, '<mark class="policy-highlight">$1</mark>');
+  return escapeHtml(source).replace(matcher, '<mark class="search-highlight">$1</mark>');
 }
 
 function normalizePdfText(value) {
