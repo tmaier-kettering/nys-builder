@@ -63,11 +63,11 @@ const els = {
   groupBy: document.getElementById('groupBy'),
   filterScope: document.getElementById('filterScope'),
   topicSubtopicFilter: document.getElementById('topicSubtopicFilter'),
-  cardSearch: document.getElementById('policySearch'),
+  cardSearch: document.getElementById('itemSearch'),
   selectAllVisible: document.getElementById('selectAllVisible'),
   shareBtn: document.getElementById('shareBtn'),
   pdfBtn: document.getElementById('pdfBtn'),
-  cardGroups: document.getElementById('policyGroups')
+  cardGroups: document.getElementById('itemGroups')
 };
 
 const state = {
@@ -439,7 +439,7 @@ function cardHtml(item, viewMode) {
     expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">▲</button>`;
   }
 
-  return `<article class="card" data-card-id="${itemId}" data-view="${escapeHtml(cardView)}">
+  return `<article class="card" data-item-id="${itemId}" data-view="${escapeHtml(cardView)}">
     <div class="card-header">
       <input class="card-checkbox" type="checkbox" data-item-id="${itemId}" ${checked} />
       <div class="card-expand-controls">${expandButtons}</div>
@@ -864,7 +864,7 @@ function bindEvents() {
     if (!validViewModes.has(target)) return;
     state.cardViewLevels.set(itemId, target);
     const item = state.items.find((entry) => entry.id === itemId);
-    const cardEl = els.cardGroups.querySelector(`.card[data-card-id="${CSS.escape(itemId)}"]`);
+    const cardEl = els.cardGroups.querySelector(`.card[data-item-id="${CSS.escape(itemId)}"]`);
     if (item && cardEl) {
       const temp = document.createElement('div');
       temp.innerHTML = cardHtml(item, target);
