@@ -24,20 +24,135 @@ window.NYS_BUILDER_DATA = {
       "Approval Status",
       "Archived",
       "Actions"
+    ],
+    "actionColumns": [
+      "Action Identifier",
+      "Action Title",
+      "Action Explanation",
+      "Scope",
+      "Jurisdiction",
+      "UNFCCC Pillar",
+      "Topic",
+      "Subtopic",
+      "Draft Year",
+      "Approval Status",
+      "Archived",
+      "Policies"
     ]
   },
   "actions": [
     {
-      "id": "rec8acjMMmNbXJ4rm",
-      "title": "Encourage your Mayor to join the Sustainable Mayors Network"
+      "id": "A1",
+      "title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
+      "scope": "subnational",
+      "issueAreas": [
+        "Transportation & Mobility",
+        "Agriculture & Food Systems"
+      ],
+      "policyIds": [
+        "2",
+        "4"
+      ],
+      "columns": {
+        "Action Identifier": "A1",
+        "Action Title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
+        "Action Explanation": "Running a FFNPT campaign in your area is a powerful way to get commitments from local officials on phasing out fossil fuels, which can be used as an accountaibility tool later and a pathway to articulating specifically how they'll phase out. check out this guide on how to run one in your area. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Scope": [
+          "subnational"
+        ],
+        "Jurisdiction": [
+          "-",
+          "subnational"
+        ],
+        "UNFCCC Pillar": [
+          "adaptation",
+          "finance"
+        ],
+        "Topic": [
+          "Transportation & Mobility",
+          "Agriculture & Food Systems"
+        ],
+        "Subtopic": [
+          "Public transit, cycling, walking",
+          "Freight and logistics decarbonization",
+          "Reducing food waste across the supply chain"
+        ],
+        "Draft Year": [
+          "2025",
+          "2026"
+        ],
+        "Approval Status": "Approved",
+        "Archived": "No",
+        "Policies": [
+          "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps.",
+          "Deploy statewide multi-hazard early warning systems by 2027 coveringheat, flood, wildfire, and air quality risks with accessible multilingual alertsdelivered through redundant channels (e.g., Maryland, Oregon, Massachusetts,California)."
+        ]
+      }
     },
     {
-      "id": "recdHbKoyDtugFxFN",
-      "title": "Set up a Bottle Cap Deposit System"
+      "id": "A2",
+      "title": "Encourage your Mayor to join the Sustainable Mayors Network",
+      "scope": "subnational",
+      "issueAreas": [
+        "Energy Decarbonization"
+      ],
+      "policyIds": [
+        "1"
+      ],
+      "columns": {
+        "Action Identifier": "A2",
+        "Action Title": "Encourage your Mayor to join the Sustainable Mayors Network",
+        "Action Explanation": "The Sustainable Mayors Network is a community of practice for local officials to exhange ideas and learn from each others' efforts. It also makes it clear that while our goernment is not acting on climate, there are many people at all levels who are taking climate action. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Scope": [
+          "subnational"
+        ],
+        "Jurisdiction": "-",
+        "UNFCCC Pillar": "\u2060youth engagement",
+        "Topic": [
+          "Energy Decarbonization"
+        ],
+        "Subtopic": "Phasing out fossil fuels in energy systems",
+        "Draft Year": "2025",
+        "Approval Status": "Approved",
+        "Archived": "No",
+        "Policies": [
+          "Recognize that achieving a Just Transition(s) is inseparable fromdelivering a just, orderly, and equitable phaseout of fossil fuels in line withkeeping 1.5 degrees within reach. A Just Transition requires ensuringequitable global energy security and committing to fully implement thedecisions and pathways identified in the first Global Stocktake, includingthrough updated NDCs and Just Transition Plans no later than 2026."
+        ]
+      }
     },
     {
-      "id": "recvvUR2TcswnYlwY",
-      "title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
+      "id": "A3",
+      "title": "Set up a Bottle Cap Deposit System",
+      "scope": "national",
+      "issueAreas": [
+        "Transportation & Mobility"
+      ],
+      "policyIds": [
+        "2"
+      ],
+      "columns": {
+        "Action Identifier": "A3",
+        "Action Title": "Set up a Bottle Cap Deposit System",
+        "Action Explanation": "Pfand systems decrease litering and encourage reuse of materials. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Scope": [
+          "national"
+        ],
+        "Jurisdiction": "-",
+        "UNFCCC Pillar": "adaptation",
+        "Topic": [
+          "Transportation & Mobility"
+        ],
+        "Subtopic": [
+          "Public transit, cycling, walking",
+          "Freight and logistics decarbonization"
+        ],
+        "Draft Year": "2025",
+        "Approval Status": "Approved",
+        "Archived": "No",
+        "Policies": [
+          "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps."
+        ]
+      }
     }
   ],
   "policies": [
@@ -51,7 +166,7 @@ window.NYS_BUILDER_DATA = {
       ],
       "commentary": "Ambitious long-term plans may seem unrealistic, but many examples exist where they are already being implemented. For exampls SIDS are... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "actionIds": [
-        "rec8acjMMmNbXJ4rm"
+        "A2"
       ],
       "columns": {
         "Policy Identifier": "1",
@@ -63,7 +178,7 @@ window.NYS_BUILDER_DATA = {
           "-"
         ],
         "UNFCCC Pillar": [
-          "⁠youth engagement"
+          "\u2060youth engagement"
         ],
         "Topic": [
           "Energy Decarbonization"
@@ -76,7 +191,7 @@ window.NYS_BUILDER_DATA = {
         "Approval Status": "Approved",
         "Archived": "Yes",
         "Actions": [
-          "2"
+          "Encourage your Mayor to join the Sustainable Mayors Network"
         ]
       }
     },
@@ -90,8 +205,8 @@ window.NYS_BUILDER_DATA = {
       ],
       "commentary": "the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "actionIds": [
-        "recdHbKoyDtugFxFN",
-        "recvvUR2TcswnYlwY"
+        "A3",
+        "A1"
       ],
       "columns": {
         "Policy Identifier": "2",
@@ -117,8 +232,8 @@ window.NYS_BUILDER_DATA = {
         "Approval Status": "Approved",
         "Archived": "No",
         "Actions": [
-          "1",
-          "3"
+          "Set up a Bottle Cap Deposit System",
+          "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
         ]
       }
     },
@@ -167,7 +282,7 @@ window.NYS_BUILDER_DATA = {
       ],
       "commentary": "Many states already have action plans in place that can serve as a reference point... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "actionIds": [
-        "recvvUR2TcswnYlwY"
+        "A1"
       ],
       "columns": {
         "Policy Identifier": "4",
@@ -192,7 +307,7 @@ window.NYS_BUILDER_DATA = {
         "Approval Status": "Pending",
         "Archived": "No",
         "Actions": [
-          "1"
+          "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
         ]
       }
     },

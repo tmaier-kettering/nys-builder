@@ -36,7 +36,6 @@ const PAGE_CONFIGS = {
 };
 
 const CHIP_FIELDS = ['Scope', 'Jurisdiction', 'UNFCCC Pillar', 'Topic', 'Subtopic', 'Draft Year'];
-const MISSING_RELATED_LABEL = '(not found)';
 const PDF_PAGE_MARGIN = 40;
 const PDF_LINE_HEIGHT = 14;
 const PDF_CONTENT_BOTTOM_MARGIN = 75;
@@ -325,7 +324,7 @@ function getRelationshipText(item, label) {
   }
 
   const relatedTitles = (pageType === 'policies' ? item.actionIds : item.policyIds)
-    .map((id) => (pageType === 'policies' ? state.actionsById.get(id) : state.policiesById.get(id)) || MISSING_RELATED_LABEL)
+    .map((id) => (pageType === 'policies' ? state.actionsById.get(id) : state.policiesById.get(id)))
     .map((value) => String(value || '').trim())
     .filter(Boolean);
 
@@ -939,11 +938,10 @@ async function load() {
   const allPolicies = rawPolicies.map(normalizePolicy);
   const allActions = rawActions.map(normalizeAction);
 
-  state.policiesById = new Map(allPolicies.map((policy) => [policy.id, getEntityPrimaryText(policy, 'policies') || 'Untitled Policy']));
-  state.actionsById = new Map(allActions.map((action) => [action.id, getEntityPrimaryText(action, 'actions') || 'Untitled Action']));
-
   state.policies = allPolicies.filter(isApprovedAndActive);
   state.actions = allActions.filter(isApprovedAndActive);
+  state.policiesById = new Map(state.policies.map((policy) => [policy.id, getEntityPrimaryText(policy, 'policies') || 'Untitled Policy']));
+  state.actionsById = new Map(state.actions.map((action) => [action.id, getEntityPrimaryText(action, 'actions') || 'Untitled Action']));
   state.items = pageType === 'policies' ? state.policies : state.actions;
 
   const metadataColumns = Array.isArray(sourceData?.metadata?.[pageConfig.columnsKey])
