@@ -13,6 +13,11 @@
   <body data-page="actions">
     <a class="feedback-btn" href="https://github.com/tmaier-kettering/nys-builder/issues/new" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
     <div class="page">
+      <div class="page-brand">
+        <a class="company-logo-link" href="https://lcoyusa.com" target="_blank" rel="noopener noreferrer" aria-label="Visit LCOY USA">
+          <img class="company-logo" src="./assets/LCOY_USA_Logo.png" alt="LCOY USA logo" />
+        </a>
+      </div>
       <nav class="page-nav" aria-label="Primary">
         <a class="page-nav-link" href="./index.html">Policies</a>
         <a class="page-nav-link active" href="./actions.html" aria-current="page">Actions</a>
@@ -34,30 +39,49 @@
           <details class="sidebar-panel" open>
             <summary class="sidebar-summary">Options</summary>
 
-            <details class="control" open>
-              <summary class="filter-header">View level</summary>
+            <details class="control">
+              <summary class="filter-header">
+                <span>View level</span>
+              </summary>
               <div class="view-level-selector" id="viewLevelSelector">
-                <button class="view-level-btn active" data-view="skim">Skim</button>
-                <button class="view-level-btn" data-view="peruse">Peruse</button>
-                <button class="view-level-btn" data-view="deep-dive">Deep Dive</button>
+                <button class="view-level-btn active" data-view="skim" type="button">
+                  <span>Skim</span>
+                  <span class="tooltip-icon" title="Shows only the headline text for quick scanning." aria-label="Skim view info">?</span>
+                </button>
+                <button class="view-level-btn" data-view="peruse" type="button">
+                  <span>Peruse</span>
+                  <span class="tooltip-icon" title="Shows headline and short explanation for each card." aria-label="Peruse view info">?</span>
+                </button>
+                <button class="view-level-btn" data-view="deep-dive" type="button">
+                  <span>Deep Dive</span>
+                  <span class="tooltip-icon" title="Shows all available card details." aria-label="Deep Dive view info">?</span>
+                </button>
               </div>
             </details>
 
-            <details class="control" open>
-              <summary class="filter-header">Group cards by</summary>
+            <div class="control control-static">
+              <div class="filter-header-row">
+                <span class="filter-header-label">Group cards by</span>
+                <span class="tooltip-icon" title="Organizes cards by Scope or Topic." aria-label="Group cards by info">?</span>
+              </div>
               <select id="groupBy">
                 <option value="scope">Scope</option>
                 <option value="issueAreas">Topic</option>
               </select>
-            </details>
+            </div>
 
-            <details class="control" open>
-              <summary class="filter-header">Filter by scope</summary>
+            <div class="control control-static">
+              <div class="filter-header-row">
+                <span class="filter-header-label">Filter by scope</span>
+                <span class="tooltip-icon" title="Limits cards to one scope category." aria-label="Filter by scope info">?</span>
+              </div>
               <select id="filterScope"></select>
-            </details>
+            </div>
 
-            <details class="control" open>
-              <summary class="filter-header">Filter by topic/subtopic</summary>
+            <details class="control">
+              <summary class="filter-header">
+                <span>Filter by topic/subtopic</span>
+              </summary>
               <div id="topicSubtopicFilter" class="topic-filter"></div>
             </details>
           </details>
@@ -70,7 +94,10 @@
               Select all visible cards
             </label>
             <div>
-              <button id="shareBtn" type="button">Share selected view</button>
+              <button id="shareBtn" type="button">
+                <span>Share selected view</span>
+                <span class="tooltip-icon" title="Copies a link with your selected cards and current view." aria-label="Share selected view info">?</span>
+              </button>
             </div>
           </div>
           <div id="itemGroups"></div>
