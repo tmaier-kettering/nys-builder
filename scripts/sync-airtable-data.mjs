@@ -423,6 +423,7 @@ function buildOutputData(recordsByTable, namedTables) {
 
       return {
         id: policy.id,
+        airtableId: policy.recordId,
         policyText: policy.policyText,
         scope: policy.scope,
         type: policy.type,

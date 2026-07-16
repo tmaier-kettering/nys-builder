@@ -36,6 +36,7 @@ const PAGE_CONFIGS = {
 };
 
 const CHIP_FIELDS = ['Scope', 'Jurisdiction', 'UNFCCC Pillar', 'Topic', 'Subtopic', 'Draft Year'];
+const AIRTABLE_ISSUES_FORM_PAGE_ID = 'pagKTnIMYpGFugulQ';
 const PDF_PAGE_MARGIN = 40;
 const PDF_LINE_HEIGHT = 14;
 const PDF_CONTENT_BOTTOM_MARGIN = 75;
@@ -451,12 +452,20 @@ function cardHtml(item, viewMode) {
     expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">▲</button>`;
   }
 
+  let suggestEditBtn = '';
+  if (pageType === 'policies' && item.airtableId) {
+    const baseId = sourceData.metadata?.baseId || '';
+    const formUrl = `https://airtable.com/${baseId}/${AIRTABLE_ISSUES_FORM_PAGE_ID}/form?prefill_Issue+Type=Policy&prefill_Policy=${encodeURIComponent(item.airtableId)}`;
+    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✏ Suggest Edit</a>`;
+  }
+
   return `<article class="card" data-item-id="${itemId}" data-view="${escapeHtml(cardView)}">
     <div class="card-header">
       <input class="card-checkbox" type="checkbox" data-item-id="${itemId}" ${checked} />
       <div class="card-expand-controls">${expandButtons}</div>
     </div>
     ${regularFields}${chips ? `<div class="card-chips">${chips}</div>` : ''}
+    ${suggestEditBtn ? `<div class="card-footer">${suggestEditBtn}</div>` : ''}
   </article>`;
 }
 
