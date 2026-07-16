@@ -28,10 +28,18 @@ body {
   padding: 2rem clamp(1rem, 2.5vw, 2rem) 2.5rem;
 }
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .page-brand {
   display: flex;
   justify-content: flex-start;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0;
 }
 
 .company-logo-link {
@@ -49,42 +57,38 @@ body {
 .page-nav {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
-  margin: 0 0 1rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.1rem;
+  margin: 0;
 }
 
 .page-nav-link {
   display: inline-flex;
   align-items: center;
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface-soft);
-  color: var(--color-text);
+  padding: 0.2rem 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
   text-decoration: none;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
   transition:
-    background-color var(--duration-fast) ease,
     color var(--duration-fast) ease,
-    border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease,
-    transform var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-fast) ease;
 }
 
 .page-nav-link:hover,
 .page-nav-link:focus-visible {
-  border-color: var(--color-primary);
   color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-bottom-color: var(--color-primary);
   outline: none;
-  transform: translateY(-1px);
 }
 
 .page-nav-link.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #fff;
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 h1 {
@@ -444,6 +448,21 @@ footer {
 }
 
 @media (max-width: 620px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .page-nav {
+    justify-content: flex-start;
+    gap: 0.9rem;
+  }
+
+  .feedback-btn {
+    top: 1rem;
+  }
+
   .main-controls button {
     margin-left: 0;
     margin-right: 0.5rem;
@@ -464,7 +483,7 @@ footer {
 /* ── Persistent feedback button ─────────────────────────────── */
 .feedback-btn {
   position: absolute;
-  top: 1rem;
+  top: 4.2rem;
   right: clamp(1rem, 2.5vw, 2rem);
   z-index: 200;
   padding: 0.45rem 0.9rem;
