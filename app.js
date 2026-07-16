@@ -331,15 +331,25 @@ function getRelationshipText(item, label) {
   return relatedTitles.join(', ');
 }
 
+function shouldHideJurisdiction(item) {
+  return normalizeFieldName(item?.scope) === 'international';
+}
+
+function shouldHideColumnForItem(item, columnName) {
+  return shouldHideJurisdiction(item) && normalizeFieldName(columnName) === normalizeFieldName('Jurisdiction');
+}
+
 function renderField(label, value, item) {
+  if (shouldHideColumnForItem(item, label)) return '';
+
   const relationshipText = getRelationshipText(item, label);
   const text = relationshipText ?? formatFieldValue(value);
   const normalizedSearchQuery = state.searchQuery.trim();
   const shouldHighlight = normalizeFieldName(label) === normalizeFieldName(pageConfig.primaryField) && normalizedSearchQuery;
 
-  return `<div class="field"><strong>${escapeHtml(label)}:</strong> ${
+  return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value">${
     text ? (shouldHighlight ? highlightMatches(text, normalizedSearchQuery) : escapeHtml(text)) : '<span class="muted">N/A</span>'
-  }</div>`;
+  }</span></div>`;
 }
 
 function getFilteredItems() {
@@ -416,6 +426,7 @@ function cardHtml(item, viewMode) {
       if (!formatFieldValue(value)) return false;
       const normalizedColumn = normalizeFieldName(column);
       if (seenColumns.has(normalizedColumn)) return false;
+      if (shouldHideColumnForItem(item, column)) return false;
       seenColumns.add(normalizedColumn);
       return true;
     })
@@ -423,6 +434,7 @@ function cardHtml(item, viewMode) {
     .join('');
 
   const chips = CHIP_FIELDS.flatMap((fieldName) => {
+    if (shouldHideColumnForItem(item, fieldName)) return [];
     const value = getColumnValue(item.columns, fieldName);
     if (!value) return [];
     return asArrayValues(value).map((chipValue) => `<span class="${chipClass(fieldName)}">${escapeHtml(chipValue)}</span>`);
@@ -715,6 +727,7 @@ async function downloadPdf() {
       items.forEach((item) => {
         writeWrapped(formatPdfValue(item.id), { bold: true, fontSize: 12 });
         orderedPdfColumns.forEach((column) => {
+          if (shouldHideColumnForItem(item, column)) return;
           const value = getRelationshipText(item, column) ?? formatFieldValue(getColumnValue(item.columns, column));
           if (value) {
             writeWrapped(`${column}: ${formatPdfValue(value)}`, { indent: 10 });
