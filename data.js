@@ -1,11 +1,11 @@
-window.NYS_BUILDER_DATA = {
+﻿window.NYS_BUILDER_DATA = {
   "metadata": {
     "generatedAt": "2026-07-12T00:06:02.101Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
       "Policies",
-      "Actions",
+      "Tools",
       "Topics",
       "Subtopics",
       "Scope",
@@ -23,12 +23,12 @@ window.NYS_BUILDER_DATA = {
       "Draft Year",
       "Approval Status",
       "Archived",
-      "Actions"
+      "Tools"
     ],
-    "actionColumns": [
-      "Action Identifier",
-      "Action Title",
-      "Action Explanation",
+    "toolColumns": [
+      "Tool Identifier",
+      "Tool Title",
+      "Tool Explanation",
       "Scope",
       "Jurisdiction",
       "UNFCCC Pillar",
@@ -40,7 +40,7 @@ window.NYS_BUILDER_DATA = {
       "Policies"
     ]
   },
-  "actions": [
+  "tools": [
     {
       "id": "A1",
       "title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
@@ -54,9 +54,9 @@ window.NYS_BUILDER_DATA = {
         "4"
       ],
       "columns": {
-        "Action Identifier": "A1",
-        "Action Title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
-        "Action Explanation": "Running a FFNPT campaign in your area is a powerful way to get commitments from local officials on phasing out fossil fuels, which can be used as an accountaibility tool later and a pathway to articulating specifically how they'll phase out. check out this guide on how to run one in your area. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Tool Identifier": "A1",
+        "Tool Title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
+        "Tool Explanation": "Running a FFNPT campaign in your area is a powerful way to get commitments from local officials on phasing out fossil fuels, which can be used as an accountaibility tool later and a pathway to articulating specifically how they'll phase out. check out this guide on how to run one in your area. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
           "subnational"
         ],
@@ -100,9 +100,9 @@ window.NYS_BUILDER_DATA = {
         "1"
       ],
       "columns": {
-        "Action Identifier": "A2",
-        "Action Title": "Encourage your Mayor to join the Sustainable Mayors Network",
-        "Action Explanation": "The Sustainable Mayors Network is a community of practice for local officials to exhange ideas and learn from each others' efforts. It also makes it clear that while our goernment is not acting on climate, there are many people at all levels who are taking climate action. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Tool Identifier": "A2",
+        "Tool Title": "Encourage your Mayor to join the Sustainable Mayors Network",
+        "Tool Explanation": "The Sustainable Mayors Network is a community of practice for local officials to exhange ideas and learn from each others' efforts. It also makes it clear that while our goernment is not acting on climate, there are many people at all levels who are taking climate action. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
           "subnational"
         ],
@@ -131,9 +131,9 @@ window.NYS_BUILDER_DATA = {
         "2"
       ],
       "columns": {
-        "Action Identifier": "A3",
-        "Action Title": "Set up a Bottle Cap Deposit System",
-        "Action Explanation": "Pfand systems decrease litering and encourage reuse of materials. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Tool Identifier": "A3",
+        "Tool Title": "Set up a Bottle Cap Deposit System",
+        "Tool Explanation": "Pfand systems decrease litering and encourage reuse of materials. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
           "national"
         ],
@@ -165,7 +165,7 @@ window.NYS_BUILDER_DATA = {
         "Energy Decarbonization"
       ],
       "commentary": "Ambitious long-term plans may seem unrealistic, but many examples exist where they are already being implemented. For exampls SIDS are... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      "actionIds": [
+      "toolIds": [
         "A2"
       ],
       "columns": {
@@ -190,7 +190,7 @@ window.NYS_BUILDER_DATA = {
         "Draft Year": "2025",
         "Approval Status": "Approved",
         "Archived": "Yes",
-        "Actions": [
+        "Tools": [
           "Encourage your Mayor to join the Sustainable Mayors Network"
         ]
       }
@@ -204,7 +204,7 @@ window.NYS_BUILDER_DATA = {
         "Transportation & Mobility"
       ],
       "commentary": "the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      "actionIds": [
+      "toolIds": [
         "A3",
         "A1"
       ],
@@ -231,7 +231,7 @@ window.NYS_BUILDER_DATA = {
         "Draft Year": "2025",
         "Approval Status": "Approved",
         "Archived": "No",
-        "Actions": [
+        "Tools": [
           "Set up a Bottle Cap Deposit System",
           "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
         ]
@@ -246,7 +246,7 @@ window.NYS_BUILDER_DATA = {
         "Transportation & Mobility"
       ],
       "commentary": "The Paris Agreement and the Paris Group are separate entities. While the US left the Paris Agreement, it did not leave the Paris group... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      "actionIds": [],
+      "toolIds": [],
       "columns": {
         "Policy Identifier": "3",
         "Policy": "Rejoin the Paris Agreement, and fulfill their role to act on climate changeas agreed under the UNFCCC.",
@@ -269,7 +269,7 @@ window.NYS_BUILDER_DATA = {
         "Draft Year": "2025",
         "Approval Status": "Approved",
         "Archived": "No",
-        "Actions": ""
+        "Tools": ""
       }
     },
     {
@@ -281,7 +281,7 @@ window.NYS_BUILDER_DATA = {
         "Agriculture & Food Systems"
       ],
       "commentary": "Many states already have action plans in place that can serve as a reference point... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      "actionIds": [
+      "toolIds": [
         "A1"
       ],
       "columns": {
@@ -306,7 +306,7 @@ window.NYS_BUILDER_DATA = {
         "Draft Year": "2026",
         "Approval Status": "Pending",
         "Archived": "No",
-        "Actions": [
+        "Tools": [
           "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
         ]
       }
@@ -321,7 +321,7 @@ window.NYS_BUILDER_DATA = {
         "Energy Decarbonization"
       ],
       "commentary": "Testing",
-      "actionIds": [],
+      "toolIds": [],
       "columns": {
         "Policy Identifier": "5",
         "Policy": "Test",
@@ -344,7 +344,7 @@ window.NYS_BUILDER_DATA = {
         "Draft Year": "2027",
         "Approval Status": "Pending",
         "Archived": "No",
-        "Actions": ""
+        "Tools": ""
       }
     }
   ],
@@ -449,3 +449,4 @@ window.NYS_BUILDER_DATA = {
     }
   ]
 };
+

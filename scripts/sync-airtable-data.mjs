@@ -4,7 +4,15 @@ const AIRTABLE_API_ROOT = 'https://api.airtable.com/v0';
 const META_API_ROOT = 'https://api.airtable.com/v0/meta';
 const OUTPUT_FILE = new URL('../data.js', import.meta.url);
 
-const REQUIRED_TABLES = ['policies', 'actions', 'topics', 'subtopics', 'scope', 'jurisdiction'];
+const REQUIRED_TABLES = ['policies', 'tools', 'topics', 'subtopics', 'scope', 'jurisdiction'];
+const REQUIRED_TABLE_ALIASES = {
+  policies: ['policies'],
+  tools: ['tools'],
+  topics: ['topics'],
+  subtopics: ['subtopics'],
+  scope: ['scope'],
+  jurisdiction: ['jurisdiction']
+};
 
 const token = process.env.AIRTABLE_TOKEN;
 const baseId = process.env.AIRTABLE_BASE_ID;
@@ -130,12 +138,19 @@ function mapNamedTables(schemaTables) {
     tableMap.set(normalizeName(table.name), table);
   }
 
-  const missing = REQUIRED_TABLES.filter((name) => !tableMap.has(name));
+  const missing = REQUIRED_TABLES.filter((name) =>
+    !REQUIRED_TABLE_ALIASES[name].some((alias) => tableMap.has(alias))
+  );
   if (missing.length > 0) {
     throw new Error(`Missing required Airtable tables: ${missing.join(', ')}`);
   }
 
-  return Object.fromEntries(REQUIRED_TABLES.map((name) => [name, tableMap.get(name)]));
+  return Object.fromEntries(
+    REQUIRED_TABLES.map((name) => [
+      name,
+      tableMap.get(REQUIRED_TABLE_ALIASES[name].find((alias) => tableMap.has(alias)))
+    ])
+  );
 }
 
 function buildSourceMaps(recordsByTable, namedTables) {
@@ -200,10 +215,18 @@ function inferLinkedTableName(fieldName) {
   if (['jurisdiction', 'jurisdictions'].includes(normalized)) return 'jurisdiction';
   if (['topic', 'topics', 'issue area', 'issue areas'].includes(normalized)) return 'topics';
   if (['subtopic', 'subtopics'].includes(normalized)) return 'subtopics';
-  if (['action', 'actions'].includes(normalized)) return 'actions';
+  if (['tool', 'tools'].includes(normalized)) return 'tools';
   if (['policy', 'policies', 'related policies'].includes(normalized)) return 'policies';
 
   return null;
+}
+
+function toToolFieldName(fieldName) {
+  const text = String(fieldName || '').trim();
+  if (!text) return text;
+  return text
+    .replace(/\bActions\b/g, 'Tools')
+    .replace(/\bAction\b/g, 'Tool');
 }
 
 function getLinkedRecordNameMap(fieldDefinition, recordNamesByTableId, namedTables) {
@@ -301,16 +324,22 @@ function getResolvedScope(fields, sourceMaps) {
     .find(Boolean) || '';
 }
 
-function normalizeAction(record, sourceMaps, actionTable, recordNamesByTableId, namedTables) {
+function normalizeTool(record, sourceMaps, toolTable, recordNamesByTableId, namedTables) {
   const fields = record.fields || {};
-  const actionColumns = {};
+  const toolColumns = {};
 
-  for (const field of actionTable.fields || []) {
-    actionColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
+  for (const field of toolTable.fields || []) {
+    toolColumns[toToolFieldName(field.name)] = normalizeFieldValue(
+      fields[field.name],
+      field,
+      recordNamesByTableId,
+      namedTables
+    );
   }
 
   const title = String(
-    pickFirstField(fields, ['Action Title', 'Action', 'Name', 'Title', 'Policy Action']) || 'Untitled Action'
+    pickFirstField(fields, ['Tool Title', 'Tool', 'Name', 'Title', 'Policy Tool']) ||
+      'Untitled Tool'
   ).trim();
   const policyRecordIds = asArray(pickFirstField(fields, ['Policies', 'Policy', 'Related Policies']));
   const topicNames = getResolvedTopicNames(fields, sourceMaps);
@@ -318,12 +347,12 @@ function normalizeAction(record, sourceMaps, actionTable, recordNamesByTableId, 
 
   return {
     recordId: record.id,
-    id: String(pickFirstField(fields, ['Action Identifier', '#', 'Action ID', 'ID']) || record.id).trim(),
+    id: String(pickFirstField(fields, ['Tool Identifier', '#', 'Tool ID', 'ID']) || record.id).trim(),
     title,
     scope,
     issueAreas: [...topicNames].sort((a, b) => a.localeCompare(b)),
     policyRecordIds,
-    columns: actionColumns
+    columns: toolColumns
   };
 }
 
@@ -332,10 +361,15 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, 
   const policyColumns = {};
 
   for (const field of policyTable.fields || []) {
-    policyColumns[field.name] = normalizeFieldValue(fields[field.name], field, recordNamesByTableId, namedTables);
+    policyColumns[toToolFieldName(field.name)] = normalizeFieldValue(
+      fields[field.name],
+      field,
+      recordNamesByTableId,
+      namedTables
+    );
   }
 
-  const policyRecordActionIds = asArray(pickFirstField(fields, ['Actions', 'Action']));
+  const policyRecordToolIds = asArray(pickFirstField(fields, ['Tools', 'Tool']));
   const topicNames = getResolvedTopicNames(fields, sourceMaps);
   const scope = getResolvedScope(fields, sourceMaps);
 
@@ -351,7 +385,7 @@ function normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, 
     type: String(pickFirstField(fields, ['Type', 'Policy Type']) || '').trim(),
     issueAreas: [...topicNames].sort((a, b) => a.localeCompare(b)),
     commentary: String(pickFirstField(fields, ['Commentary', 'Notes', 'Description']) || '').trim(),
-    actionRecordIds: policyRecordActionIds,
+    toolRecordIds: policyRecordToolIds,
     columns: policyColumns
   };
 }
@@ -360,39 +394,39 @@ function buildOutputData(recordsByTable, namedTables) {
   const sourceMaps = buildSourceMaps(recordsByTable, namedTables);
   const recordNamesByTableId = buildRecordNamesByTableId(recordsByTable, namedTables);
   const policyTable = namedTables.policies;
-  const actionTable = namedTables.actions;
+  const toolTable = namedTables.tools;
 
-  const actions = recordsByTable.actions.map((record) =>
-    normalizeAction(record, sourceMaps, actionTable, recordNamesByTableId, namedTables)
+  const tools = recordsByTable.tools.map((record) =>
+    normalizeTool(record, sourceMaps, toolTable, recordNamesByTableId, namedTables)
   );
   const policies = recordsByTable.policies.map((record) =>
     normalizePolicy(record, sourceMaps, policyTable, recordNamesByTableId, namedTables)
   );
 
-  const actionByRecordId = new Map(actions.map((action) => [action.recordId, action]));
+  const toolByRecordId = new Map(tools.map((tool) => [tool.recordId, tool]));
   const policyByRecordId = new Map(policies.map((policy) => [policy.recordId, policy]));
 
-  for (const action of actions) {
-    for (const policyRecordId of action.policyRecordIds) {
+  for (const tool of tools) {
+    for (const policyRecordId of tool.policyRecordIds) {
       const policy = policyByRecordId.get(policyRecordId);
       if (!policy) continue;
-      policy.actionRecordIds.push(action.recordId);
+      policy.toolRecordIds.push(tool.recordId);
     }
   }
 
   for (const policy of policies) {
-    for (const actionRecordId of policy.actionRecordIds) {
-      const action = actionByRecordId.get(actionRecordId);
-      if (!action) continue;
-      action.policyRecordIds.push(policy.recordId);
+    for (const toolRecordId of policy.toolRecordIds) {
+      const tool = toolByRecordId.get(toolRecordId);
+      if (!tool) continue;
+      tool.policyRecordIds.push(policy.recordId);
     }
   }
 
-  const actionList = actions
-    .map((action) => {
+  const toolList = tools
+    .map((tool) => {
       const linkedPolicyIds = [
         ...new Set(
-          action.policyRecordIds
+          tool.policyRecordIds
             .map((policyRecordId) => policyByRecordId.get(policyRecordId))
             .filter(Boolean)
             .map((policy) => policy.id)
@@ -400,24 +434,24 @@ function buildOutputData(recordsByTable, namedTables) {
       ];
 
       return {
-        id: action.id,
-        title: action.title,
-        scope: action.scope,
-        issueAreas: action.issueAreas,
+        id: tool.id,
+        title: tool.title,
+        scope: tool.scope,
+        issueAreas: tool.issueAreas,
         policyIds: linkedPolicyIds.sort((a, b) => a.localeCompare(b)),
-        columns: action.columns
+        columns: tool.columns
       };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const policyList = policies
     .map((policy) => {
-      const linkedActionIds = [
+      const linkedToolIds = [
         ...new Set(
-          policy.actionRecordIds
-            .map((actionRecordId) => actionByRecordId.get(actionRecordId))
+          policy.toolRecordIds
+            .map((toolRecordId) => toolByRecordId.get(toolRecordId))
             .filter(Boolean)
-            .map((action) => action.id)
+            .map((tool) => tool.id)
         )
       ];
 
@@ -429,7 +463,7 @@ function buildOutputData(recordsByTable, namedTables) {
         type: policy.type,
         issueAreas: policy.issueAreas,
         commentary: policy.commentary,
-        actionIds: linkedActionIds.sort((a, b) => a.localeCompare(b)),
+        toolIds: linkedToolIds.sort((a, b) => a.localeCompare(b)),
         columns: policy.columns
       };
     })
@@ -458,10 +492,10 @@ function buildOutputData(recordsByTable, namedTables) {
       source: 'Airtable',
       baseId,
       tables: REQUIRED_TABLES.map((name) => titleCase(name)),
-      policyColumns: (policyTable.fields || []).map((field) => field.name),
-      actionColumns: (actionTable.fields || []).map((field) => field.name)
+      policyColumns: (policyTable.fields || []).map((field) => toToolFieldName(field.name)),
+      toolColumns: (toolTable.fields || []).map((field) => toToolFieldName(field.name))
     },
-    actions: actionList,
+    tools: toolList,
     policies: policyList,
     topics: topicsList
   };
@@ -480,7 +514,7 @@ async function main() {
   const jsContent = `window.NYS_BUILDER_DATA = ${JSON.stringify(outputData, null, 2)};\n`;
   await writeFile(OUTPUT_FILE, jsContent, 'utf8');
 
-  console.log(`Wrote ${outputData.policies.length} policies and ${outputData.actions.length} actions to data.js`);
+  console.log(`Wrote ${outputData.policies.length} policies and ${outputData.tools.length} tools to data.js`);
 }
 
 main().catch((error) => {
