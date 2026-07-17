@@ -36,6 +36,7 @@ jobs:
         with:
           node-version: 20
       - name: Sync Airtable data
+        continue-on-error: true
         env:
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
