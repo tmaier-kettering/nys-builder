@@ -974,3 +974,104 @@ details.control > summary.filter-header + * {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
+
+/* ── PDF export mode modal ───────────────────────────────────── */
+.pdf-export-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 850;
+  display: grid;
+  place-items: center;
+}
+
+.pdf-export-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 46, 91, 0.22);
+}
+
+.pdf-export-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(460px, calc(100vw - 2rem));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 18px 46px rgba(6, 121, 74, 0.2);
+  padding: 1rem;
+  animation: fade-slide-down var(--duration-base) var(--ease-standard) both;
+}
+
+.pdf-export-modal-title {
+  margin: 0;
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary-strong);
+}
+
+.pdf-export-modal-subtitle {
+  margin: 0.45rem 0 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.pdf-export-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.pdf-export-option-btn,
+.pdf-export-cancel-btn {
+  font: inherit;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.pdf-export-option-btn {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+}
+
+.pdf-export-option-btn--with-commentary {
+  background: #98cd69;
+  border-color: #98cd69;
+  color: #000;
+}
+
+.pdf-export-option-btn:hover {
+  transform: translateY(-1px);
+  background: var(--color-primary-strong);
+  border-color: var(--color-primary-strong);
+}
+
+.pdf-export-option-btn--with-commentary:hover {
+  background: color-mix(in srgb, #98cd69 82%, #000);
+  border-color: color-mix(in srgb, #98cd69 82%, #000);
+  color: #000;
+}
+
+.pdf-export-cancel-btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text-muted);
+}
+
+.pdf-export-cancel-btn:hover {
+  background: color-mix(in srgb, var(--color-dark-blue) 8%, var(--color-surface-soft));
+  color: var(--color-text);
+}
+
+.pdf-export-option-btn:focus-visible,
+.pdf-export-cancel-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
