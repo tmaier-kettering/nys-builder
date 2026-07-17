@@ -636,8 +636,10 @@ function cardHtml(item, viewMode) {
       <input class="card-checkbox" type="checkbox" data-item-id="${itemId}" ${checked} />
       <div class="card-expand-controls">${expandButtons}</div>
     </div>
-    ${regularFields}${chips ? `<div class="card-chips">${chips}</div>` : ''}
-    ${suggestEditBtn || viewAllBtn ? `<div class="card-footer">${suggestEditBtn}${viewAllBtn}</div>` : ''}
+    ${regularFields}
+    ${viewAllBtn ? `<div class="card-view-all-row">${viewAllBtn}</div>` : ''}
+    ${chips ? `<div class="card-chips">${chips}</div>` : ''}
+    ${suggestEditBtn ? `<div class="card-footer">${suggestEditBtn}</div>` : ''}
   </article>`;
 }
 
