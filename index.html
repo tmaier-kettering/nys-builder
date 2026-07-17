@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="policies">
-    <a class="feedback-btn" href="https://github.com/tmaier-kettering/nys-builder/issues/new" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
+    <a class="feedback-btn" href="https://airtable.com/appA4oGhgyOzwt8QK/pagKTnIMYpGFugulQ/form?prefill_Issue+Type=Feature/Bug" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
     <div class="page">
       <header class="page-header">
         <div class="page-brand">
@@ -48,15 +48,15 @@
               <div class="view-level-selector" id="viewLevelSelector">
                 <button class="view-level-btn active" data-view="skim" type="button">
                   <span>Skim</span>
-                  <span class="tooltip-icon" title="Shows only the headline text for quick scanning." aria-label="Skim view info">?</span>
+                  <span class="tooltip-icon" title="Shows only the action title for quick scanning." aria-label="Skim view info">?</span>
                 </button>
                 <button class="view-level-btn" data-view="peruse" type="button">
                   <span>Peruse</span>
-                  <span class="tooltip-icon" title="Shows headline and short explanation for each card." aria-label="Peruse view info">?</span>
+                  <span class="tooltip-icon" title="Shows action title and explanation." aria-label="Peruse view info">?</span>
                 </button>
                 <button class="view-level-btn" data-view="deep-dive" type="button">
                   <span>Deep Dive</span>
-                  <span class="tooltip-icon" title="Shows all available card details." aria-label="Deep Dive view info">?</span>
+                  <span class="tooltip-icon" title="Shows action title, explanation, and related policies." aria-label="Deep Dive view info">?</span>
                 </button>
               </div>
             </details>
@@ -64,7 +64,7 @@
             <div class="control control-static">
               <div class="filter-header-row">
                 <span class="filter-header-label">Group cards by</span>
-                <span class="tooltip-icon" title="Organizes cards by Scope or Topic." aria-label="Group cards by info">?</span>
+                <span class="tooltip-icon" title="Changes which headings the actions are organized within" aria-label="Group cards by info">?</span>
               </div>
               <select id="groupBy">
                 <option value="scope">Scope</option>
@@ -75,7 +75,7 @@
             <div class="control control-static">
               <div class="filter-header-row">
                 <span class="filter-header-label">Filter by scope</span>
-                <span class="tooltip-icon" title="Limits cards to one scope category." aria-label="Filter by scope info">?</span>
+                <span class="tooltip-icon" title="Select actions by geography" aria-label="Filter by scope info">?</span>
               </div>
               <select id="filterScope"></select>
             </div>
@@ -98,11 +98,11 @@
             <div>
               <button id="shareBtn" type="button">
                 <span>Share selected view</span>
-                <span class="tooltip-icon" title="Copies a link with your selected cards and current view." aria-label="Share selected view info">?</span>
+                <span class="tooltip-icon" title="Copies a link with your selected policies in this interactive format." aria-label="Share selected view info">?</span>
               </button>
               <button id="pdfBtn" type="button">
                 <span>Download selected PDF</span>
-                <span class="tooltip-icon" title="Exports selected policy cards as a PDF file." aria-label="Download selected PDF info">?</span>
+                <span class="tooltip-icon" title="Exports selected policy cards as a PDF file with NYS formatting and addenda." aria-label="Download selected PDF info">?</span>
               </button>
             </div>
           </div>
