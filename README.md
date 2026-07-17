@@ -1,11 +1,11 @@
 # NYS Builder Explorer
 
-This repository contains a static website that displays policy recommendations and related actions from Airtable data.
+This repository contains a static website that displays policy recommendations and related tools from Airtable data.
 
 ## Files
 
 - `index.html` – policies page UI shell.
-- `actions.html` – actions page UI shell.
+- `tools.html` – tools page UI shell.
 - `app.js` – shared frontend logic for both pages, including filters, grouping, selection, sharing, and policy PDF export.
 - `theme.css` – design tokens and color palette variables for easy visual customization.
 - `styles.css` – main visual styles, layout, and UI animations.
@@ -24,7 +24,7 @@ python3 -m http.server 8000
 Then open:
 
 - `http://127.0.0.1:8000/index.html`
-- `http://127.0.0.1:8000/actions.html`
+- `http://127.0.0.1:8000/tools.html`
 
 ## Sync data from Airtable
 
@@ -40,7 +40,7 @@ cd nys-builder
 node ./scripts/sync-airtable-data.mjs
 ```
 
-The sync script reads Airtable schema metadata, captures the exact field lists from the `policies` and `actions` tables, and writes both datasets to `data.js`. The UI renders those columns directly on cards and resolves linked policies/actions by their display titles.
+The sync script reads Airtable schema metadata, captures the exact field lists from the `policies` and `tools` tables, and writes both datasets to `data.js`. The UI renders those columns directly on cards and resolves linked policies/tools by their display titles.
 
 Direct file open is also supported:
 

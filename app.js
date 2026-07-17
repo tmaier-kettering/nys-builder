@@ -3,7 +3,7 @@ const PAGE_CONFIGS = {
     itemKey: 'policies',
     columnsKey: 'policyColumns',
     primaryField: 'Policy',
-    relationField: 'Actions',
+    relationField: 'Tools',
     hiddenColumns: ['#', 'Policy ID', 'ID', 'Policy Identifier', 'Approval Status', 'Archived', 'Type'],
     cardColumnsByView: {
       skim: ['Policy'],
@@ -18,20 +18,20 @@ const PAGE_CONFIGS = {
     pdfEnabled: true,
     pdfFilePrefix: 'selected-policies'
   },
-  actions: {
-    itemKey: 'actions',
-    columnsKey: 'actionColumns',
-    primaryField: 'Action Title',
+  tools: {
+    itemKey: 'tools',
+    columnsKey: 'toolColumns',
+    primaryField: 'Tool Title',
     relationField: 'Policies',
-    hiddenColumns: ['#', 'Action ID', 'ID', 'Action Identifier', 'Approval Status', 'Archived'],
+    hiddenColumns: ['#', 'Tool ID', 'ID', 'Tool Identifier', 'Approval Status', 'Archived'],
     cardColumnsByView: {
-      skim: ['Action Title'],
-      peruse: ['Action Title', 'Action Explanation'],
+      skim: ['Tool Title'],
+      peruse: ['Tool Title', 'Tool Explanation'],
       'deep-dive': 'ALL'
     },
     pdfColumnsByView: {},
     pdfEnabled: false,
-    pdfFilePrefix: 'selected-actions'
+    pdfFilePrefix: 'selected-tools'
   }
 };
 
@@ -55,7 +55,7 @@ const PDF_ASSETS = {
 const FILE_PROTOCOL_ASSET_HINT =
   ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
 
-const pageType = document.body.dataset.page === 'actions' ? 'actions' : 'policies';
+const pageType = document.body.dataset.page === 'tools' ? 'tools' : 'policies';
 const pageConfig = PAGE_CONFIGS[pageType];
 const sourceData = window.NYS_BUILDER_DATA || {};
 
@@ -73,10 +73,10 @@ const els = {
 
 const state = {
   policies: [],
-  actions: [],
+  tools: [],
   items: [],
   itemColumns: [],
-  actionsById: new Map(),
+  toolsById: new Map(),
   policiesById: new Map(),
   selectedIds: new Set(),
   visibleIds: [],
@@ -328,8 +328,8 @@ function getRelationshipText(item, label) {
     return null;
   }
 
-  const relatedTitles = (pageType === 'policies' ? item.actionIds : item.policyIds)
-    .map((id) => (pageType === 'policies' ? state.actionsById.get(id) : state.policiesById.get(id)))
+  const relatedTitles = (pageType === 'policies' ? item.toolIds : item.policyIds)
+    .map((id) => (pageType === 'policies' ? state.toolsById.get(id) : state.policiesById.get(id)))
     .map((value) => String(value || '').trim())
     .filter(Boolean);
 
@@ -338,7 +338,7 @@ function getRelationshipText(item, label) {
 
 function getRelatedItems(item) {
   if (pageType === 'policies') {
-    return item.actionIds.map((id) => state.actions.find((a) => a.id === id)).filter(Boolean);
+    return item.toolIds.map((id) => state.tools.find((tool) => tool.id === id)).filter(Boolean);
   }
   return item.policyIds.map((id) => state.policies.find((p) => p.id === id)).filter(Boolean);
 }
@@ -346,14 +346,14 @@ function getRelatedItems(item) {
 function getRelatedTooltip(relatedItem) {
   const text =
     pageType === 'policies'
-      ? formatFieldValue(getColumnValue(relatedItem.columns, 'Action Explanation'))
+      ? formatFieldValue(getColumnValue(relatedItem.columns, 'Tool Explanation'))
       : formatFieldValue(getColumnValue(relatedItem.columns, 'Commentary'));
   if (!text) return '';
   return text.length > 220 ? `${text.slice(0, 220)}\u2026` : text;
 }
 
 function renderRelationField(label, item) {
-  const relatedKind = pageType === 'policies' ? 'actions' : 'policies';
+  const relatedKind = pageType === 'policies' ? 'tools' : 'policies';
   const relatedItems = getRelatedItems(item);
   if (!relatedItems.length) {
     return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value"><span class="muted">N/A</span></span></div>`;
@@ -399,7 +399,7 @@ function buildSidePanelHtml(item, kind) {
 
 function openRelatedPanel(itemId, kind) {
   const relatedItem =
-    kind === 'actions' ? state.actions.find((a) => a.id === itemId) : state.policies.find((p) => p.id === itemId);
+    kind === 'tools' ? state.tools.find((tool) => tool.id === itemId) : state.policies.find((p) => p.id === itemId);
   if (!relatedItem) return;
 
   document.querySelectorAll('.related-list-item--active').forEach((el) => el.classList.remove('related-list-item--active'));
@@ -408,7 +408,7 @@ function openRelatedPanel(itemId, kind) {
   );
   activePanelItemId = itemId;
 
-  const kindLabel = kind === 'actions' ? 'Related Action' : 'Related Policy';
+  const kindLabel = kind === 'tools' ? 'Related Tool' : 'Related Policy';
   sidePanelEl.querySelector('.related-side-panel-kind').textContent = kindLabel;
   sidePanelEl.querySelector('.related-side-panel-body').innerHTML = buildSidePanelHtml(relatedItem, kind);
   sidePanelEl.hidden = false;
@@ -624,8 +624,8 @@ function cardHtml(item, viewMode) {
   if (cardView === 'deep-dive') {
     const visibleRelated = getRelatedItems(item);
     if (visibleRelated.length > 0) {
-      const targetPage = pageType === 'policies' ? './actions.html' : './index.html';
-      const targetLabel = pageType === 'policies' ? 'actions' : 'policies';
+      const targetPage = pageType === 'policies' ? './tools.html' : './index.html';
+      const targetLabel = pageType === 'policies' ? 'tools' : 'policies';
       const url = `${targetPage}?selected=${visibleRelated.map((r) => r.id).join(',')}&onlySelected=1`;
       viewAllBtn = `<a class="card-view-all-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View all ${escapeHtml(targetLabel)} on this card \u2192</a>`;
     }
@@ -1110,19 +1110,23 @@ function normalizePolicy(policy) {
     primaryText: policy.policyText || '',
     scope: formatFieldValue(getColumnValue(columns, 'Scope') || policy.scope),
     issueAreas: asArrayValues(getColumnValue(columns, 'Topic') || policy.issueAreas),
-    actionIds: Array.isArray(policy.actionIds) ? policy.actionIds.map((item) => String(item).trim()).filter(Boolean) : splitMulti(policy.actionIds),
+    toolIds: Array.isArray(policy.toolIds)
+      ? policy.toolIds.map((item) => String(item).trim()).filter(Boolean)
+      : splitMulti(policy.toolIds),
     columns
   };
 }
 
-function normalizeAction(action) {
-  const columns = action.columns && typeof action.columns === 'object' && !Array.isArray(action.columns) ? action.columns : {};
+function normalizeTool(tool) {
+  const columns = tool.columns && typeof tool.columns === 'object' && !Array.isArray(tool.columns) ? tool.columns : {};
   return {
-    id: String(action.id || '').trim(),
-    primaryText: action.title || formatFieldValue(getColumnValue(columns, 'Action Title')),
-    scope: formatFieldValue(getColumnValue(columns, 'Scope') || action.scope),
-    issueAreas: asArrayValues(getColumnValue(columns, 'Topic') || action.issueAreas),
-    policyIds: Array.isArray(action.policyIds) ? action.policyIds.map((item) => String(item).trim()).filter(Boolean) : splitMulti(action.policyIds),
+    id: String(tool.id || '').trim(),
+    primaryText:
+      tool.title ||
+      formatFieldValue(getColumnValue(columns, 'Tool Title')),
+    scope: formatFieldValue(getColumnValue(columns, 'Scope') || tool.scope),
+    issueAreas: asArrayValues(getColumnValue(columns, 'Topic') || tool.issueAreas),
+    policyIds: Array.isArray(tool.policyIds) ? tool.policyIds.map((item) => String(item).trim()).filter(Boolean) : splitMulti(tool.policyIds),
     columns
   };
 }
@@ -1155,22 +1159,22 @@ function buildTopicsData() {
 
 async function load() {
   const rawPolicies = Array.isArray(sourceData.policies) ? sourceData.policies : [];
-  const rawActions = Array.isArray(sourceData.actions) ? sourceData.actions : [];
+  const rawTools = Array.isArray(sourceData.tools) ? sourceData.tools : [];
 
-  if (!rawPolicies.length && !rawActions.length) {
+  if (!rawPolicies.length && !rawTools.length) {
     throw new Error('No Airtable data is available in data.js');
   }
 
   const allPolicies = rawPolicies.map(normalizePolicy);
-  const allActions = rawActions.map(normalizeAction);
+  const allTools = rawTools.map(normalizeTool);
 
   state.policies = allPolicies.filter(isApprovedAndActive);
-  state.actions = allActions.filter(isApprovedAndActive);
+  state.tools = allTools.filter(isApprovedAndActive);
   state.policiesById = new Map(state.policies.map((policy) => [policy.id, getEntityPrimaryText(policy, 'policies') || 'Untitled Policy']));
-  state.actionsById = new Map(state.actions.map((action) => [action.id, getEntityPrimaryText(action, 'actions') || 'Untitled Action']));
-  state.items = pageType === 'policies' ? state.policies : state.actions;
+  state.toolsById = new Map(state.tools.map((tool) => [tool.id, getEntityPrimaryText(tool, 'tools') || 'Untitled Tool']));
+  state.items = pageType === 'policies' ? state.policies : state.tools;
 
-  const metadataColumns = Array.isArray(sourceData?.metadata?.[pageConfig.columnsKey])
+  let metadataColumns = Array.isArray(sourceData?.metadata?.[pageConfig.columnsKey])
     ? sourceData.metadata[pageConfig.columnsKey].map((name) => String(name || '').trim()).filter(Boolean)
     : [];
   const derivedColumns = [...new Set(state.items.flatMap((item) => Object.keys(item.columns || {})))];
