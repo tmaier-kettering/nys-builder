@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NYS Builder Tools</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./theme.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="tools">
-    <a class="feedback-btn" href="https://airtable.com/appA4oGhgyOzwt8QK/pagKTnIMYpGFugulQ/form?prefill_Issue+Type=Feature/Bug" target="_blank" rel="noopener noreferrer">🐛 Feedback / Bug Report</a>
     <div class="page">
       <header class="page-header">
         <div class="page-brand">
@@ -19,13 +19,26 @@
             <img class="company-logo" src="./assets/LCOY_USA_Logo.png" alt="LCOY USA logo" />
           </a>
         </div>
-        <nav class="page-nav" aria-label="Primary">
-          <a class="page-nav-link" href="./index.html">Policies</a>
-          <a class="page-nav-link active" href="./tools.html" aria-current="page">Tools</a>
-        </nav>
+        <div class="header-actions">
+          <nav class="page-nav" aria-label="Primary">
+            <a class="page-nav-link" href="./index.html">Policies</a>
+            <a class="page-nav-link active" href="./tools.html" aria-current="page">Tools</a>
+          </nav>
+          <a class="feedback-btn" href="https://airtable.com/appA4oGhgyOzwt8QK/pagKTnIMYpGFugulQ/form?prefill_Issue+Type=Feature/Bug" target="_blank" rel="noopener noreferrer">Feedback / Bug Report</a>
+        </div>
       </header>
-      <h1>NYS Builder Tool Explorer</h1>
-      <p>This website is a collection of policies drafted and approved at the Local Conference of Youth (LCOY) USA, which together form the National Youth Statement (NYS). You can use this website to browse and select policies which can be exported as your custom version of the NYS (.pdf format) when advocating for targeted issues.</p>
+
+      <section class="hero">
+        <span class="hero-eyebrow">LCOY USA &middot; National Youth Statement</span>
+        <h1>NYS Builder Tool Explorer</h1>
+        <p class="subtitle">This website is a collection of policies drafted and approved at the Local Conference of Youth (LCOY) USA, which together form the National Youth Statement (NYS). You can use this website to browse and select policies which can be exported as your custom version of the NYS (.pdf format) when advocating for targeted issues.</p>
+        <div class="hero-badges">
+          <span class="hero-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="9" /></svg>Youth-drafted at LCOY USA</span>
+          <span class="hero-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="9" /></svg>Search &amp; filter by scope</span>
+          <span class="hero-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="9" /></svg>Share your custom toolkit</span>
+        </div>
+      </section>
+
       <div class="search-row">
         <label class="search-label" for="itemSearch">Search tool title</label>
         <input

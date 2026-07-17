@@ -637,20 +637,20 @@ function cardHtml(item, viewMode) {
 
   let expandButtons = '';
   if (cardView === 'skim') {
-    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Expand to Peruse">â–¼</button>`;
+    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Expand to Peruse">▼</button>`;
   } else if (cardView === 'peruse') {
     expandButtons =
-      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="skim" title="Collapse to Skim">â–²</button>` +
-      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="deep-dive" title="Expand to Deep Dive">â–¼</button>`;
+      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="skim" title="Collapse to Skim">▲</button>` +
+      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="deep-dive" title="Expand to Deep Dive">▼</button>`;
   } else if (cardView === 'deep-dive') {
-    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">â–²</button>`;
+    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">▲</button>`;
   }
 
   let suggestEditBtn = '';
   if (pageType === 'policies' && item.airtableId) {
     const baseId = sourceData.metadata?.baseId || '';
     const formUrl = `https://airtable.com/${baseId}/${AIRTABLE_ISSUES_FORM_PAGE_ID}/form?prefill_Issue+Type=Policy&prefill_Policy=${encodeURIComponent(item.airtableId)}`;
-    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">âœ Suggest Edit</a>`;
+    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✎ Suggest Edit</a>`;
   }
 
   let viewAllBtn = '';
