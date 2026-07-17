@@ -3,6 +3,7 @@
 
   /* Core typography */
   --font-sans: 'Montserrat', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Fraunces', 'Montserrat', 'Segoe UI', serif;
   --font-size-base: 16px;
   --line-height-base: 1.5;
 
@@ -41,12 +42,39 @@
   --color-primary-strong: #008968;
   --color-accent: #00AB9C;
 
+  /* Gradients */
+  --gradient-aurora:
+    radial-gradient(60% 90% at 8% -10%, color-mix(in srgb, var(--color-light-green) 55%, transparent), transparent 60%),
+    radial-gradient(55% 80% at 96% -15%, color-mix(in srgb, var(--color-turquoise) 55%, transparent), transparent 60%),
+    radial-gradient(70% 90% at 50% 120%, color-mix(in srgb, var(--color-dark-blue) 30%, transparent), transparent 65%),
+    linear-gradient(160deg, var(--color-dark-blue) 0%, #1c3f6e 42%, var(--color-mint-green) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-dark-green) 0%, var(--color-mint-green) 55%, var(--color-turquoise) 100%);
+  --gradient-primary-hover: linear-gradient(135deg, var(--color-mint-green) 0%, var(--color-turquoise) 100%);
+  --gradient-text: linear-gradient(100deg, #ffffff 0%, #d7f5e6 45%, #9fe6cf 100%);
+  --gradient-underline: linear-gradient(90deg, var(--color-light-green), var(--color-turquoise));
+  --gradient-page-bg:
+    radial-gradient(46rem 30rem at 12% -8%, color-mix(in srgb, var(--color-light-green) 16%, transparent), transparent 60%),
+    radial-gradient(40rem 28rem at 100% 0%, color-mix(in srgb, var(--color-turquoise) 14%, transparent), transparent 55%),
+    radial-gradient(50rem 34rem at 50% 110%, color-mix(in srgb, var(--color-dark-green) 8%, transparent), transparent 60%),
+    var(--color-bg);
+
+  /* Surfaces */
+  --surface-glass: color-mix(in srgb, var(--color-surface) 78%, transparent);
+  --surface-glass-strong: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  --border-glass: color-mix(in srgb, var(--color-surface) 45%, transparent);
+
   /* Effects */
+  --shadow-xs: 0 1px 2px rgba(10, 35, 25, 0.05);
   --shadow-soft: 0 8px 30px rgba(6, 121, 74, 0.08);
+  --shadow-md: 0 10px 24px rgba(10, 40, 35, 0.1);
   --shadow-hover: 0 16px 36px rgba(6, 121, 74, 0.16);
+  --shadow-lg: 0 24px 60px rgba(10, 35, 55, 0.16);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-turquoise) 30%, transparent), 0 12px 30px color-mix(in srgb, var(--color-turquoise) 25%, transparent);
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
   --field-label-min-width: 92px;
 
   /* Motion */
