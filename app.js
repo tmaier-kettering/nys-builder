@@ -88,6 +88,10 @@ const state = {
   searchQuery: ''
 };
 
+let activePanelItemId = null;
+let tooltipEl = null;
+let sidePanelEl = null;
+
 function splitMulti(value) {
   return String(value || '')
     .split(',')
@@ -332,6 +336,160 @@ function getRelationshipText(item, label) {
   return relatedTitles.join(', ');
 }
 
+function getRelatedItems(item) {
+  if (pageType === 'policies') {
+    return item.actionIds.map((id) => state.actions.find((a) => a.id === id)).filter(Boolean);
+  }
+  return item.policyIds.map((id) => state.policies.find((p) => p.id === id)).filter(Boolean);
+}
+
+function getRelatedTooltip(relatedItem) {
+  const text =
+    pageType === 'policies'
+      ? formatFieldValue(getColumnValue(relatedItem.columns, 'Action Explanation'))
+      : formatFieldValue(getColumnValue(relatedItem.columns, 'Commentary'));
+  if (!text) return '';
+  return text.length > 220 ? `${text.slice(0, 220)}\u2026` : text;
+}
+
+function renderRelationField(label, item) {
+  const relatedKind = pageType === 'policies' ? 'actions' : 'policies';
+  const relatedItems = getRelatedItems(item);
+  if (!relatedItems.length) {
+    return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value"><span class="muted">N/A</span></span></div>`;
+  }
+  const listItems = relatedItems
+    .map((relatedItem) => {
+      const primaryText = getEntityPrimaryText(relatedItem, relatedKind);
+      const tooltip = getRelatedTooltip(relatedItem);
+      return `<li class="related-list-item" data-related-id="${escapeHtml(relatedItem.id)}" data-related-kind="${escapeHtml(relatedKind)}" data-tooltip="${escapeHtml(tooltip)}">${escapeHtml(primaryText)}</li>`;
+    })
+    .join('');
+  return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value"><ul class="related-list">${listItems}</ul></span></div>`;
+}
+
+function buildSidePanelHtml(item, kind) {
+  const config = PAGE_CONFIGS[kind];
+  const metaCols = Array.isArray(sourceData?.metadata?.[config.columnsKey])
+    ? sourceData.metadata[config.columnsKey].map((n) => String(n || '').trim()).filter(Boolean)
+    : [];
+  const orderedCols = [...new Set([...metaCols, ...Object.keys(item.columns)])];
+  const fields = orderedCols
+    .filter((col) => {
+      if (config.hiddenColumns.some((h) => normalizeFieldName(h) === normalizeFieldName(col))) return false;
+      if (shouldHideColumnForItem(item, col)) return false;
+      if (isChipField(col)) return false;
+      return true;
+    })
+    .map((col) => {
+      const formatted = formatFieldValue(getColumnValue(item.columns, col));
+      if (!formatted) return '';
+      return `<div class="field"><span class="field-label">${escapeHtml(col)}:</span><span class="field-value">${escapeHtml(formatted)}</span></div>`;
+    })
+    .filter(Boolean)
+    .join('');
+  const chips = CHIP_FIELDS.flatMap((fieldName) => {
+    if (shouldHideColumnForItem(item, fieldName)) return [];
+    const value = getColumnValue(item.columns, fieldName);
+    if (!value) return [];
+    return asArrayValues(value).map((chipValue) => `<span class="${chipClass(fieldName)}">${escapeHtml(chipValue)}</span>`);
+  }).join('');
+  return `${fields}${chips ? `<div class="card-chips">${chips}</div>` : ''}`;
+}
+
+function openRelatedPanel(itemId, kind) {
+  const relatedItem =
+    kind === 'actions' ? state.actions.find((a) => a.id === itemId) : state.policies.find((p) => p.id === itemId);
+  if (!relatedItem) return;
+
+  document.querySelectorAll('.related-list-item--active').forEach((el) => el.classList.remove('related-list-item--active'));
+  document.querySelectorAll(`.related-list-item[data-related-id="${CSS.escape(itemId)}"]`).forEach((el) =>
+    el.classList.add('related-list-item--active')
+  );
+  activePanelItemId = itemId;
+
+  const kindLabel = kind === 'actions' ? 'Related Action' : 'Related Policy';
+  sidePanelEl.querySelector('.related-side-panel-kind').textContent = kindLabel;
+  sidePanelEl.querySelector('.related-side-panel-body').innerHTML = buildSidePanelHtml(relatedItem, kind);
+  sidePanelEl.hidden = false;
+  if (tooltipEl) tooltipEl.hidden = true;
+}
+
+function closeRelatedPanel() {
+  if (!sidePanelEl) return;
+  sidePanelEl.hidden = true;
+  activePanelItemId = null;
+  document.querySelectorAll('.related-list-item--active').forEach((el) => el.classList.remove('related-list-item--active'));
+}
+
+function initRelatedPanels() {
+  tooltipEl = document.createElement('div');
+  tooltipEl.className = 'related-tooltip';
+  tooltipEl.hidden = true;
+  document.body.appendChild(tooltipEl);
+
+  sidePanelEl = document.createElement('div');
+  sidePanelEl.className = 'related-side-panel';
+  sidePanelEl.hidden = true;
+  sidePanelEl.innerHTML =
+    '<div class="related-side-panel-overlay"></div>' +
+    '<div class="related-side-panel-drawer">' +
+    '<div class="related-side-panel-header">' +
+    '<span class="related-side-panel-kind"></span>' +
+    '<button class="related-side-panel-close" type="button" aria-label="Close panel">\u00d7</button>' +
+    '</div>' +
+    '<div class="related-side-panel-body"></div>' +
+    '</div>';
+  document.body.appendChild(sidePanelEl);
+
+  document.addEventListener('mouseover', (e) => {
+    const listItem = e.target.closest('.related-list-item');
+    if (!listItem || listItem.classList.contains('related-list-item--active')) return;
+    const tip = listItem.dataset.tooltip || '';
+    if (!tip) return;
+    tooltipEl.textContent = tip;
+    tooltipEl.hidden = false;
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const listItem = e.target.closest('.related-list-item');
+    if (listItem && !listItem.contains(e.relatedTarget)) {
+      tooltipEl.hidden = true;
+    }
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (tooltipEl && !tooltipEl.hidden) {
+      tooltipEl.style.left = `${Math.min(e.clientX + 14, window.innerWidth - 320)}px`;
+      tooltipEl.style.top = `${Math.min(e.clientY + 14, window.innerHeight - 60)}px`;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.related-side-panel-close')) {
+      closeRelatedPanel();
+      return;
+    }
+
+    const listItem = e.target.closest('.related-list-item');
+    if (listItem) {
+      const id = listItem.dataset.relatedId;
+      const kind = listItem.dataset.relatedKind;
+      if (id === activePanelItemId) {
+        closeRelatedPanel();
+      } else {
+        openRelatedPanel(id, kind);
+      }
+      return;
+    }
+
+    const drawer = sidePanelEl && sidePanelEl.querySelector('.related-side-panel-drawer');
+    if (!sidePanelEl.hidden && drawer && !drawer.contains(e.target)) {
+      closeRelatedPanel();
+    }
+  });
+}
+
 function shouldHideJurisdiction(item) {
   return normalizeFieldName(item?.scope) === 'international';
 }
@@ -343,8 +501,11 @@ function shouldHideColumnForItem(item, columnName) {
 function renderField(label, value, item) {
   if (shouldHideColumnForItem(item, label)) return '';
 
-  const relationshipText = getRelationshipText(item, label);
-  const text = relationshipText ?? formatFieldValue(value);
+  if (normalizeFieldName(label) === normalizeFieldName(pageConfig.relationField)) {
+    return renderRelationField(label, item);
+  }
+
+  const text = formatFieldValue(value);
   const normalizedSearchQuery = state.searchQuery.trim();
   const shouldHighlight = normalizeFieldName(label) === normalizeFieldName(pageConfig.primaryField) && normalizedSearchQuery;
 
@@ -459,13 +620,24 @@ function cardHtml(item, viewMode) {
     suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✏ Suggest Edit</a>`;
   }
 
+  let viewAllBtn = '';
+  if (cardView === 'deep-dive') {
+    const visibleRelated = getRelatedItems(item);
+    if (visibleRelated.length > 0) {
+      const targetPage = pageType === 'policies' ? './actions.html' : './index.html';
+      const targetLabel = pageType === 'policies' ? 'actions' : 'policies';
+      const url = `${targetPage}?selected=${visibleRelated.map((r) => r.id).join(',')}&onlySelected=1`;
+      viewAllBtn = `<a class="card-view-all-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View all ${escapeHtml(targetLabel)} on this card \u2192</a>`;
+    }
+  }
+
   return `<article class="card" data-item-id="${itemId}" data-view="${escapeHtml(cardView)}">
     <div class="card-header">
       <input class="card-checkbox" type="checkbox" data-item-id="${itemId}" ${checked} />
       <div class="card-expand-controls">${expandButtons}</div>
     </div>
     ${regularFields}${chips ? `<div class="card-chips">${chips}</div>` : ''}
-    ${suggestEditBtn ? `<div class="card-footer">${suggestEditBtn}</div>` : ''}
+    ${suggestEditBtn || viewAllBtn ? `<div class="card-footer">${suggestEditBtn}${viewAllBtn}</div>` : ''}
   </article>`;
 }
 
@@ -505,6 +677,12 @@ function render() {
       `
     )
     .join('');
+
+  if (activePanelItemId) {
+    els.cardGroups.querySelectorAll(`.related-list-item[data-related-id="${CSS.escape(activePanelItemId)}"]`).forEach((el) => {
+      el.classList.add('related-list-item--active');
+    });
+  }
 
   updateSelectAllVisible();
 }
@@ -891,7 +1069,14 @@ function bindEvents() {
       const temp = document.createElement('div');
       temp.innerHTML = cardHtml(item, target);
       const newCard = temp.firstElementChild;
-      if (newCard) cardEl.replaceWith(newCard);
+      if (newCard) {
+        cardEl.replaceWith(newCard);
+        if (activePanelItemId) {
+          newCard.querySelectorAll(`.related-list-item[data-related-id="${CSS.escape(activePanelItemId)}"]`).forEach((el) => {
+            el.classList.add('related-list-item--active');
+          });
+        }
+      }
     }
   });
 
@@ -994,6 +1179,7 @@ async function load() {
 
   renderTopicFilter();
   initializeFromQuery();
+  initRelatedPanels();
   bindEvents();
   render();
 }
