@@ -674,6 +674,11 @@ details.control > summary.filter-header + * {
 }
 
 /* ── Card footer (suggest edit) ─────────────────────────────── */
+.card-view-all-row {
+  display: flex;
+  margin-top: 0.65rem;
+}
+
 .card-footer {
   display: flex;
   justify-content: flex-end;
