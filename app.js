@@ -1,4 +1,4 @@
-const PAGE_CONFIGS = {
+﻿const PAGE_CONFIGS = {
   policies: {
     itemKey: 'policies',
     columnsKey: 'policyColumns',
@@ -37,16 +37,37 @@ const PAGE_CONFIGS = {
 
 const CHIP_FIELDS = ['Scope', 'Jurisdiction', 'UNFCCC Pillar', 'Topic', 'Subtopic', 'Draft Year'];
 const AIRTABLE_ISSUES_FORM_PAGE_ID = 'pagKTnIMYpGFugulQ';
-const PDF_PAGE_MARGIN = 40;
-const PDF_LINE_HEIGHT = 14;
-const PDF_CONTENT_BOTTOM_MARGIN = 75;
-const PDF_TOC_TITLE_SIZE = 22;
-const PDF_FOOTER_TEXT_SIZE = 10;
-const PDF_PAGE_WIDTH = 612;
-const PDF_PAGE_HEIGHT = 792;
-const PDF_FOOTER_LOGO_Y = 18;
-const PDF_FOOTER_PAGE_NUMBER_Y = 24;
-const PDF_LOGO_MAX_WIDTH = 90;
+// Read formatting values from pdf-config.js (window.PDF_CONFIG) with hard-coded fallbacks.
+const _pdfCfg = window.PDF_CONFIG || {};
+const _pdfColors = _pdfCfg.colors || {};
+const _pdfType = _pdfCfg.typography || {
+  lineHeightMultiplier: 1.15,
+  paragraphSpacing: 6,
+  normal:   { size: 11, style: 'regular' },
+  policy:   { size: 12, style: 'regular' },
+  title:    { size: 24, style: 'black' },
+  subtitle: { size: 14, style: 'light' },
+  heading1: { size: 20, style: 'extraBold' },
+  heading2: { size: 18, style: 'regular' },
+  heading3: { size: 14, style: 'italic' }
+};
+
+const PDF_PAGE_MARGIN          = _pdfCfg.pageMargin          ?? 40;
+const PDF_LINE_HEIGHT          = 14; // legacy fallback used by splitTextForPdf
+const PDF_CONTENT_BOTTOM_MARGIN = _pdfCfg.contentBottomMargin ?? 75;
+const PDF_TOC_TITLE_SIZE       = _pdfCfg.tocTitleSize         ?? 22;
+const PDF_FOOTER_TEXT_SIZE     = _pdfCfg.footerTextSize       ?? 10;
+const PDF_PAGE_WIDTH           = _pdfCfg.pageWidth            ?? 612;
+const PDF_PAGE_HEIGHT          = _pdfCfg.pageHeight           ?? 792;
+const PDF_FOOTER_LOGO_Y        = _pdfCfg.footerLogoY          ?? 18;
+const PDF_FOOTER_PAGE_NUMBER_Y = _pdfCfg.footerPageNumberY    ?? 24;
+const PDF_LOGO_MAX_WIDTH       = _pdfCfg.footerLogoMaxWidth   ?? 90;
+const PDF_LABEL_COLUMN_WIDTH   = _pdfCfg.labelColumnWidth     ?? 108;
+const PDF_TABLE_COLUMN_GAP     = _pdfCfg.tableColumnGap       ?? 12;
+const PDF_TABLE_INDENT         = _pdfCfg.tableIndent          ?? 36;
+const PDF_BRAND_COLORS         = _pdfColors;
+const PDF_BRAND_TYPE           = _pdfType;
+const PDF_FONT_ASSETS          = _pdfCfg.fonts || {};
 const PDF_ASSETS = {
   coverPage: './assets/first_page.pdf',
   tableOfContentsBackground: './assets/table_of_contents_background.svg',
@@ -85,7 +106,8 @@ const state = {
   cardViewLevels: new Map(),
   topicSubtopicFilter: new Set(),
   topicsData: [],
-  searchQuery: ''
+  searchQuery: '',
+  openToolId: ''
 };
 
 let activePanelItemId = null;
@@ -171,6 +193,17 @@ function highlightMatches(text, query) {
 
 function normalizePdfText(value) {
   return String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ').trim();
+}
+
+function hexToPdfRgb(hex, rgb) {
+  const normalized = String(hex || '').trim().replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) {
+    return rgb(0.1, 0.1, 0.1);
+  }
+  const red = Number.parseInt(normalized.slice(0, 2), 16) / 255;
+  const green = Number.parseInt(normalized.slice(2, 4), 16) / 255;
+  const blue = Number.parseInt(normalized.slice(4, 6), 16) / 255;
+  return rgb(red, green, blue);
 }
 
 function formatPdfValue(value) {
@@ -604,20 +637,20 @@ function cardHtml(item, viewMode) {
 
   let expandButtons = '';
   if (cardView === 'skim') {
-    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Expand to Peruse">▼</button>`;
+    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Expand to Peruse">â–¼</button>`;
   } else if (cardView === 'peruse') {
     expandButtons =
-      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="skim" title="Collapse to Skim">▲</button>` +
-      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="deep-dive" title="Expand to Deep Dive">▼</button>`;
+      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="skim" title="Collapse to Skim">â–²</button>` +
+      `<button class="card-expand-btn" data-item-id="${itemId}" data-target="deep-dive" title="Expand to Deep Dive">â–¼</button>`;
   } else if (cardView === 'deep-dive') {
-    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">▲</button>`;
+    expandButtons = `<button class="card-expand-btn" data-item-id="${itemId}" data-target="peruse" title="Collapse to Peruse">â–²</button>`;
   }
 
   let suggestEditBtn = '';
   if (pageType === 'policies' && item.airtableId) {
     const baseId = sourceData.metadata?.baseId || '';
     const formUrl = `https://airtable.com/${baseId}/${AIRTABLE_ISSUES_FORM_PAGE_ID}/form?prefill_Issue+Type=Policy&prefill_Policy=${encodeURIComponent(item.airtableId)}`;
-    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✏ Suggest Edit</a>`;
+    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">âœ Suggest Edit</a>`;
   }
 
   let viewAllBtn = '';
@@ -779,6 +812,58 @@ function copyShareLink() {
   }
 }
 
+function promptPdfCommentaryMode() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'pdf-export-modal';
+    overlay.innerHTML =
+      '<div class="pdf-export-modal-overlay"></div>' +
+      '<div class="pdf-export-modal-dialog" role="dialog" aria-modal="true" aria-label="PDF export options">' +
+      '<h3 class="pdf-export-modal-title">Export PDF options</h3>' +
+      '<p class="pdf-export-modal-subtitle">Choose how policy commentary should be handled in the export.</p>' +
+      '<div class="pdf-export-modal-actions">' +
+      '<button class="pdf-export-option-btn pdf-export-option-btn--with-commentary" data-pdf-option="with" type="button">With commentary</button>' +
+      '<button class="pdf-export-option-btn" data-pdf-option="without" type="button">Without commentary</button>' +
+      '<button class="pdf-export-cancel-btn" data-pdf-option="cancel" type="button">Cancel</button>' +
+      '</div>' +
+      '</div>';
+
+    const cleanup = (result) => {
+      document.removeEventListener('keydown', handleKeyDown);
+      overlay.remove();
+      resolve(result);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        cleanup(null);
+      }
+    };
+
+    overlay.addEventListener('click', (event) => {
+      const optionButton = event.target.closest('[data-pdf-option]');
+      if (optionButton) {
+        const selected = optionButton.getAttribute('data-pdf-option');
+        if (selected === 'with') {
+          cleanup('with');
+        } else if (selected === 'without') {
+          cleanup('without');
+        } else {
+          cleanup(null);
+        }
+        return;
+      }
+
+      if (event.target.classList.contains('pdf-export-modal-overlay')) {
+        cleanup(null);
+      }
+    });
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.appendChild(overlay);
+  });
+}
+
 async function downloadPdf() {
   if (!pageConfig.pdfEnabled) return;
 
@@ -787,6 +872,10 @@ async function downloadPdf() {
     alert('Select at least one card first.');
     return;
   }
+
+  const commentaryMode = await promptPdfCommentaryMode();
+  if (!commentaryMode) return;
+  const includeCommentary = commentaryMode === 'with';
 
   const grouped = buildGroups(selectedItems);
   const pdfLib = window.PDFLib;
@@ -801,8 +890,62 @@ async function downloadPdf() {
     const pageWidth = PDF_PAGE_WIDTH;
     const pageHeight = PDF_PAGE_HEIGHT;
     const textWidth = pageWidth - PDF_PAGE_MARGIN * 2;
-    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const cfgPalette = _pdfCfg.palette || { heading: 'marineBlue', body: 'black', accent: 'turquoise', alert: 'unionRed' };
+    const palette = {
+      heading: hexToPdfRgb(PDF_BRAND_COLORS[cfgPalette.heading], rgb),
+      body: hexToPdfRgb(PDF_BRAND_COLORS[cfgPalette.body], rgb),
+      accent: hexToPdfRgb(PDF_BRAND_COLORS[cfgPalette.accent], rgb),
+      alert: hexToPdfRgb(PDF_BRAND_COLORS[cfgPalette.alert], rgb)
+    };
+
+    const policyBlocksCfg = _pdfCfg.policyBlocks || {};
+    const bandA = hexToPdfRgb(policyBlocksCfg.bandAColor || '#fcfcfc', rgb);
+    const bandB = hexToPdfRgb(policyBlocksCfg.bandBColor || '#f1f1f1', rgb);
+    const commentaryColor = hexToPdfRgb(policyBlocksCfg.commentaryTextColor || '#595959', rgb);
+
+    const defaultFonts = {
+      regular: await pdfDoc.embedFont(StandardFonts.Helvetica),
+      light: await pdfDoc.embedFont(StandardFonts.Helvetica),
+      italic: await pdfDoc.embedFont(StandardFonts.HelveticaOblique),
+      extraBold: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      black: await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    };
+    const fonts = { ...defaultFonts };
+    try {
+      if (window.fontkit && typeof pdfDoc.registerFontkit === 'function') {
+        pdfDoc.registerFontkit(window.fontkit);
+        const fontEntries = await Promise.all(
+          Object.entries(PDF_FONT_ASSETS).map(async ([key, path]) => [key, await fetchAssetBytes(path)])
+        );
+        for (const [key, bytes] of fontEntries) {
+          fonts[key] = await pdfDoc.embedFont(bytes);
+        }
+      }
+    } catch (error) {
+      console.warn('Montserrat fonts could not be loaded. Continuing with fallback fonts.', error);
+    }
+
+    const getFont = (styleName) => fonts[styleName] || fonts.regular;
+    const lineHeight = (fontSize) => fontSize * PDF_BRAND_TYPE.lineHeightMultiplier;
+    const splitWords = (text) => normalizePdfText(text).split(/\s+/).filter(Boolean);
+
+    const buildWrappedWordLines = (words, font, size, maxWidth) => {
+      if (!words.length) return [[]];
+      const lines = [];
+      let currentLine = [words[0]];
+      for (let index = 1; index < words.length; index += 1) {
+        const candidate = [...currentLine, words[index]].join(' ');
+        if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+          currentLine.push(words[index]);
+        } else {
+          lines.push(currentLine);
+          currentLine = [words[index]];
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    };
+
     let logoImage = null;
     let logoWidth = 0;
     let logoHeight = 0;
@@ -815,19 +958,12 @@ async function downloadPdf() {
     } catch (error) {
       console.warn('Cover page asset failed to load. Using fallback cover page.', error);
       const fallbackCover = pdfDoc.addPage([pageWidth, pageHeight]);
-      fallbackCover.drawText('NYS Builder Policy Explorer', {
+      fallbackCover.drawText('Policies from the National Youth Statement on Climate', {
         x: PDF_PAGE_MARGIN,
         y: pageHeight - PDF_PAGE_MARGIN - 40,
-        size: 26,
-        font: helveticaBold,
-        color: rgb(0.08, 0.2, 0.4)
-      });
-      fallbackCover.drawText('Cover asset could not be loaded in this environment.', {
-        x: PDF_PAGE_MARGIN,
-        y: pageHeight - PDF_PAGE_MARGIN - 70,
-        size: 12,
-        font: helvetica,
-        color: rgb(0.2, 0.2, 0.2)
+        size: PDF_BRAND_TYPE.title.size,
+        font: getFont(PDF_BRAND_TYPE.title.style),
+        color: palette.heading
       });
     }
 
@@ -859,8 +995,8 @@ async function downloadPdf() {
       x: PDF_PAGE_MARGIN,
       y: pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE,
       size: PDF_TOC_TITLE_SIZE,
-      font: helveticaBold,
-      color: rgb(0.08, 0.2, 0.4)
+      font: getFont('extraBold'),
+      color: palette.heading
     });
 
     let page = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -868,7 +1004,7 @@ async function downloadPdf() {
     const groupStartPages = new Map();
     let currentContentPageNumber = 1;
 
-    const ensureSpace = (requiredHeight = PDF_LINE_HEIGHT) => {
+    const ensureSpace = (requiredHeight) => {
       if (cursorY - requiredHeight < PDF_CONTENT_BOTTOM_MARGIN) {
         page = pdfDoc.addPage([pageWidth, pageHeight]);
         currentContentPageNumber += 1;
@@ -876,53 +1012,262 @@ async function downloadPdf() {
       }
     };
 
-    const writeWrapped = (text, options = {}) => {
-      const { bold = false, fontSize = 11, indent = 0, spacingAfter = 0 } = options;
-      const font = bold ? helveticaBold : helvetica;
-      const lines = splitTextForPdf(text, font, fontSize, textWidth - indent);
-      const requiredHeight = Math.max(lines.length, 1) * PDF_LINE_HEIGHT + spacingAfter;
-      ensureSpace(requiredHeight);
-      lines.forEach((line) => {
-        page.drawText(line, {
+    const drawWordLine = ({ words, x, y, width, font, fontSize, color, justify }) => {
+      if (!words.length) return;
+      if (!justify || words.length < 2) {
+        page.drawText(words.join(' '), { x, y, size: fontSize, font, color });
+        return;
+      }
+      const spaceWidth = font.widthOfTextAtSize(' ', fontSize);
+      const wordsWidth = words.reduce((sum, word) => sum + font.widthOfTextAtSize(word, fontSize), 0);
+      const baseWidth = wordsWidth + spaceWidth * (words.length - 1);
+      const extra = Math.max(0, (width - baseWidth) / (words.length - 1));
+      let cursorX = x;
+      words.forEach((word, index) => {
+        page.drawText(word, { x: cursorX, y, size: fontSize, font, color });
+        cursorX += font.widthOfTextAtSize(word, fontSize);
+        if (index < words.length - 1) cursorX += spaceWidth + extra;
+      });
+    };
+
+    const writeSimpleWrapped = (text, options = {}) => {
+      const {
+        style = 'normal',
+        color = palette.body,
+        indent = 0,
+        width = textWidth - indent,
+        justify = false,
+        spacingAfter = 4,
+        underline = false
+      } = options;
+      const typeSpec = PDF_BRAND_TYPE[style] || PDF_BRAND_TYPE.normal;
+      const fontSize = typeSpec.size;
+      const font = getFont(typeSpec.style);
+      const words = splitWords(text);
+      const lines = words.length ? buildWrappedWordLines(words, font, fontSize, width) : [[]];
+      const neededHeight = Math.max(lines.length, 1) * lineHeight(fontSize) + spacingAfter;
+      ensureSpace(neededHeight);
+      lines.forEach((lineWords, index) => {
+        drawWordLine({
+          words: lineWords,
           x: PDF_PAGE_MARGIN + indent,
           y: cursorY,
-          size: fontSize,
+          width,
           font,
-          color: rgb(0.1, 0.1, 0.1)
+          fontSize,
+          color,
+          justify: justify && index !== lines.length - 1
         });
-        cursorY -= PDF_LINE_HEIGHT;
+        if (underline && lineWords.length) {
+          const lineText = lineWords.join(' ');
+          const underlineWidth = font.widthOfTextAtSize(lineText, fontSize);
+          page.drawLine({
+            start: { x: PDF_PAGE_MARGIN + indent, y: cursorY - 1 },
+            end: { x: PDF_PAGE_MARGIN + indent + underlineWidth, y: cursorY - 1 },
+            thickness: 0.7,
+            color
+          });
+        }
+        cursorY -= lineHeight(fontSize);
       });
       cursorY -= spacingAfter;
     };
 
-    writeWrapped('Selected Policies', { bold: true, fontSize: 16, spacingAfter: 6 });
+    const writePolicyBlock = (policyNumber, policyText, commentaryText, groupPolicyIndex) => {
+      const policyFontSize = (PDF_BRAND_TYPE.policy && PDF_BRAND_TYPE.policy.size) || 12;
+      const numberPrefix = `${policyNumber}. `;
+      const regularFont = getFont((PDF_BRAND_TYPE.policy && PDF_BRAND_TYPE.policy.style) || PDF_BRAND_TYPE.normal.style);
+      const boldFont = getFont('extraBold');
+      const lh = lineHeight(policyFontSize);
+      const policyWords = splitWords(policyText);
 
-    const configuredColumns = pageConfig.pdfColumnsByView[state.viewMode] || pageConfig.pdfColumnsByView.skim;
-    const normalizedPdfColumns = new Set(
-      Array.isArray(configuredColumns) ? configuredColumns.map((column) => normalizeFieldName(column)) : []
-    );
-    const orderedPdfColumns =
-      configuredColumns === 'ALL'
-        ? state.itemColumns.filter((column) => !isHiddenColumn(column))
-        : state.itemColumns.filter((column) => normalizedPdfColumns.has(normalizeFieldName(column)));
+      const firstWord = policyWords[0] || '';
+      const remainingWords = firstWord ? policyWords.slice(1) : [];
+      const spaceWidth = regularFont.widthOfTextAtSize(' ', policyFontSize);
+      const numberWidth = boldFont.widthOfTextAtSize(numberPrefix, policyFontSize);
+      const firstWordWidth = boldFont.widthOfTextAtSize(firstWord, policyFontSize);
+      const firstLineAvailable = Math.max(40, textWidth - numberWidth - firstWordWidth - spaceWidth);
 
-    grouped.forEach(([title, items]) => {
-      ensureSpace(PDF_LINE_HEIGHT * 3);
-      if (!groupStartPages.has(title)) {
-        groupStartPages.set(title, currentContentPageNumber);
+      const firstLineWords = [];
+      let currentWidth = 0;
+      for (let index = 0; index < remainingWords.length; index += 1) {
+        const wordWidth = regularFont.widthOfTextAtSize(remainingWords[index], policyFontSize);
+        const addition = (firstLineWords.length ? spaceWidth : 0) + wordWidth;
+        if (currentWidth + addition <= firstLineAvailable) {
+          firstLineWords.push(remainingWords[index]);
+          currentWidth += addition;
+        } else {
+          break;
+        }
       }
-      writeWrapped(title, { bold: true, fontSize: 13, spacingAfter: 4 });
+      const trailingWords = remainingWords.slice(firstLineWords.length);
+      const trailingPolicyLines = trailingWords.length
+        ? buildWrappedWordLines(trailingWords, regularFont, policyFontSize, textWidth)
+        : [];
 
-      items.forEach((item) => {
-        writeWrapped(formatPdfValue(item.id), { bold: true, fontSize: 12 });
-        orderedPdfColumns.forEach((column) => {
-          if (shouldHideColumnForItem(item, column)) return;
-          const value = getRelationshipText(item, column) ?? formatFieldValue(getColumnValue(item.columns, column));
-          if (value) {
-            writeWrapped(`${column}: ${formatPdfValue(value)}`, { indent: 10 });
-          }
+      const commentary = formatFieldValue(commentaryText);
+      const showCommentary = includeCommentary && commentary;
+      const commentaryInset = policyBlocksCfg.commentaryInset ?? 30;
+      const commentaryQuoteArea = policyBlocksCfg.commentaryQuoteArea ?? 24;
+      const commentaryWidth = textWidth - commentaryInset * 2 - commentaryQuoteArea;
+      const commentaryQuoteSize = policyBlocksCfg.commentaryQuoteSize ?? 34;
+      const commentaryQuoteOffsetX = policyBlocksCfg.commentaryQuoteOffsetX ?? 0;
+      const commentaryQuoteOffsetY = policyBlocksCfg.commentaryQuoteOffsetY ?? 8;
+      const commentaryFontSize = PDF_BRAND_TYPE.normal.size;
+      const commentaryFont = getFont(PDF_BRAND_TYPE.normal.style);
+      const commentaryWords = splitWords(commentary);
+      const commentaryLines = showCommentary
+        ? buildWrappedWordLines(commentaryWords, commentaryFont, commentaryFontSize, commentaryWidth)
+        : [];
+
+      const policyLineCount = 1 + trailingPolicyLines.length;
+      const commentaryBlockHeight = showCommentary
+        ? 8 + Math.max(1, commentaryLines.length) * lineHeight(commentaryFontSize) + 12
+        : 0;
+      const blockPaddingTop = 8;
+      const blockPaddingBottom = 10;
+      const blockHeight = blockPaddingTop + policyLineCount * lh + commentaryBlockHeight + blockPaddingBottom;
+      const bandInsetX = policyBlocksCfg.bandInsetX ?? 6;
+      const bandWidthExtra = policyBlocksCfg.bandWidthExtra ?? 12;
+      const bandOffsetY = policyBlocksCfg.bandOffsetY ?? 0;
+      const bandHeightExtra = policyBlocksCfg.bandHeightExtra ?? 0;
+
+      ensureSpace(blockHeight + 2);
+
+      const firstPolicyBaseline = cursorY - blockPaddingTop;
+      const lastPolicyBaseline = firstPolicyBaseline - (policyLineCount - 1) * lh;
+      const policyBandTop = firstPolicyBaseline + policyFontSize * 0.82;
+      const policyBandBottom = lastPolicyBaseline - policyFontSize * 0.28;
+      let contentBandBottom = policyBandBottom;
+      if (showCommentary && commentaryLines.length) {
+        const commentaryGap = 8;
+        const commentaryLineStep = lineHeight(commentaryFontSize);
+        const firstCommentaryBaseline = firstPolicyBaseline - policyLineCount * lh - commentaryGap;
+        const lastCommentaryBaseline = firstCommentaryBaseline - (commentaryLines.length - 1) * commentaryLineStep;
+        contentBandBottom = lastCommentaryBaseline - commentaryFontSize * 0.28;
+      }
+      const blockBottom = contentBandBottom + bandOffsetY;
+      const bandHeight = Math.max(1, policyBandTop - contentBandBottom + bandHeightExtra);
+      page.drawRectangle({
+        x: PDF_PAGE_MARGIN - bandInsetX,
+        y: blockBottom,
+        width: textWidth + bandWidthExtra,
+        height: bandHeight,
+        color: groupPolicyIndex % 2 === 0 ? bandA : bandB
+      });
+
+      cursorY -= blockPaddingTop;
+
+      if (!firstWord) {
+        page.drawText(numberPrefix.trim(), {
+          x: PDF_PAGE_MARGIN,
+          y: cursorY,
+          size: policyFontSize,
+          font: boldFont,
+          color: palette.body
         });
+        cursorY -= lh;
+      } else {
+        page.drawText(numberPrefix, {
+          x: PDF_PAGE_MARGIN,
+          y: cursorY,
+          size: policyFontSize,
+          font: boldFont,
+          color: palette.body
+        });
+        page.drawText(firstWord, {
+          x: PDF_PAGE_MARGIN + numberWidth,
+          y: cursorY,
+          size: policyFontSize,
+          font: boldFont,
+          color: palette.body
+        });
+        if (firstLineWords.length) {
+          drawWordLine({
+            words: firstLineWords,
+            x: PDF_PAGE_MARGIN + numberWidth + firstWordWidth + spaceWidth,
+            y: cursorY,
+            width: firstLineAvailable,
+            font: regularFont,
+            fontSize: policyFontSize,
+            color: palette.body,
+            justify: false
+          });
+        }
+        cursorY -= lh;
+      }
+
+      trailingPolicyLines.forEach((lineWords, index) => {
+        drawWordLine({
+          words: lineWords,
+          x: PDF_PAGE_MARGIN,
+          y: cursorY,
+          width: textWidth,
+          font: regularFont,
+          fontSize: policyFontSize,
+          color: palette.body,
+          justify: index !== trailingPolicyLines.length - 1
+        });
+        cursorY -= lh;
+      });
+
+      if (showCommentary) {
         cursorY -= 8;
+        const commentX = PDF_PAGE_MARGIN + commentaryInset;
+        const quoteX = commentX;
+        const textX = commentX + commentaryQuoteArea;
+
+        page.drawText('“', {
+          x: quoteX + commentaryQuoteOffsetX,
+          y: cursorY + commentaryQuoteOffsetY,
+          size: commentaryQuoteSize,
+          font: getFont('light'),
+          color: commentaryColor
+        });
+
+        commentaryLines.forEach((lineWords, index) => {
+          drawWordLine({
+            words: lineWords,
+            x: textX,
+            y: cursorY,
+            width: commentaryWidth,
+            font: commentaryFont,
+            fontSize: commentaryFontSize,
+            color: commentaryColor,
+            justify: index !== commentaryLines.length - 1
+          });
+          cursorY -= lineHeight(commentaryFontSize);
+        });
+      }
+
+      cursorY -= blockPaddingBottom;
+    };
+
+    writeSimpleWrapped('Policies from the National Youth Statement on Climate', {
+      style: 'heading1',
+      color: palette.heading,
+      justify: false,
+      spacingAfter: 6
+    });
+
+    let policyNumber = 1;
+    grouped.forEach(([title, items]) => {
+      if (!groupStartPages.has(title)) groupStartPages.set(title, currentContentPageNumber);
+      writeSimpleWrapped(title, {
+        style: 'heading2',
+        color: palette.heading,
+        underline: false,
+        spacingAfter: 6
+      });
+
+      items.forEach((item, groupPolicyIndex) => {
+        writePolicyBlock(
+          policyNumber,
+          getColumnValue(item.columns, pageConfig.primaryField),
+          getColumnValue(item.columns, 'Commentary'),
+          groupPolicyIndex
+        );
+        policyNumber += 1;
       });
     });
 
@@ -930,10 +1275,11 @@ async function downloadPdf() {
     let tocTruncated = false;
     for (const [title] of grouped) {
       const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
-      const numberWidth = helvetica.widthOfTextAtSize(numberLabel, 12);
+      const tocFont = getFont(PDF_BRAND_TYPE.normal.style);
+      const numberWidth = tocFont.widthOfTextAtSize(numberLabel, 12);
       const maxEntryWidth = pageWidth - PDF_PAGE_MARGIN * 2 - numberWidth - 20;
-      const entryLines = splitTextForPdf(title, helvetica, 12, maxEntryWidth);
-      const blockHeight = Math.max(entryLines.length, 1) * PDF_LINE_HEIGHT + 4;
+      const entryLines = splitTextForPdf(title, tocFont, 12, maxEntryWidth);
+      const blockHeight = Math.max(entryLines.length, 1) * lineHeight(12) + 4;
       if (tocCursorY - blockHeight < PDF_CONTENT_BOTTOM_MARGIN) {
         tocTruncated = true;
         break;
@@ -941,7 +1287,7 @@ async function downloadPdf() {
 
       for (let index = 0; index < entryLines.length; index += 1) {
         const line = entryLines[index];
-        if (tocCursorY - PDF_LINE_HEIGHT < PDF_CONTENT_BOTTOM_MARGIN) {
+        if (tocCursorY - lineHeight(12) < PDF_CONTENT_BOTTOM_MARGIN) {
           tocTruncated = true;
           break;
         }
@@ -949,8 +1295,8 @@ async function downloadPdf() {
           x: PDF_PAGE_MARGIN,
           y: tocCursorY,
           size: 12,
-          font: helvetica,
-          color: rgb(0.08, 0.2, 0.4)
+          font: tocFont,
+          color: palette.heading
         });
 
         if (index === 0) {
@@ -958,12 +1304,12 @@ async function downloadPdf() {
             x: pageWidth - PDF_PAGE_MARGIN - numberWidth,
             y: tocCursorY,
             size: 12,
-            font: helveticaBold,
-            color: rgb(0.08, 0.2, 0.4)
+            font: getFont('extraBold'),
+            color: palette.heading
           });
         }
 
-        tocCursorY -= PDF_LINE_HEIGHT;
+        tocCursorY -= lineHeight(12);
       }
 
       if (tocTruncated) break;
@@ -975,8 +1321,8 @@ async function downloadPdf() {
         x: PDF_PAGE_MARGIN,
         y: PDF_CONTENT_BOTTOM_MARGIN - 12,
         size: 10,
-        font: helvetica,
-        color: rgb(0.08, 0.2, 0.4)
+        font: getFont(PDF_BRAND_TYPE.normal.style),
+        color: palette.heading
       });
     }
 
@@ -984,7 +1330,7 @@ async function downloadPdf() {
       if (index < 2) return;
 
       const pageNumberLabel = String(index - 1);
-      const pageNumberWidth = helvetica.widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
+      const pageNumberWidth = getFont(PDF_BRAND_TYPE.normal.style).widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
       if (logoImage) {
         pdfPage.drawImage(logoImage, {
           x: PDF_PAGE_MARGIN,
@@ -997,8 +1343,8 @@ async function downloadPdf() {
         x: pageWidth - PDF_PAGE_MARGIN - pageNumberWidth,
         y: PDF_FOOTER_PAGE_NUMBER_Y,
         size: PDF_FOOTER_TEXT_SIZE,
-        font: helvetica,
-        color: rgb(0.2, 0.2, 0.2)
+        font: getFont(PDF_BRAND_TYPE.normal.style),
+        color: palette.heading
       });
     });
 
@@ -1008,7 +1354,6 @@ async function downloadPdf() {
     alert(`Unable to generate PDF: ${error.message}`);
   }
 }
-
 function setViewMode(view) {
   state.viewMode = view;
   els.viewLevelSelector.querySelectorAll('.view-level-btn').forEach((button) => {
@@ -1097,6 +1442,9 @@ function initializeFromQuery() {
 
   splitMulti(params.get('selected')).forEach((id) => state.selectedIds.add(id));
   state.onlySelectedFromLink = params.get('onlySelected') === '1' && state.selectedIds.size > 0;
+  if (pageType === 'tools') {
+    state.openToolId = (params.get('openTool') || '').trim();
+  }
 }
 
 function isApprovedAndActive(item) {
@@ -1188,6 +1536,10 @@ async function load() {
   initRelatedPanels();
   bindEvents();
   render();
+
+  if (pageType === 'tools' && state.openToolId) {
+    openRelatedPanel(state.openToolId, 'tools');
+  }
 }
 
 load().catch((error) => {
