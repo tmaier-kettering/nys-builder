@@ -1,6 +1,6 @@
-﻿window.NYS_BUILDER_DATA = {
+window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-07-12T00:06:02.101Z",
+    "generatedAt": "2026-08-01T01:51:19.924Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -23,7 +23,8 @@
       "Draft Year",
       "Approval Status",
       "Archived",
-      "Tools"
+      "Tools",
+      "Edits"
     ],
     "toolColumns": [
       "Tool Identifier",
@@ -37,127 +38,102 @@
       "Draft Year",
       "Approval Status",
       "Archived",
-      "Policies"
+      "Policies",
+      "Edits"
     ]
   },
   "tools": [
     {
-      "id": "A1",
+      "id": "1",
       "title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
-      "scope": "subnational",
-      "issueAreas": [
-        "Transportation & Mobility",
-        "Agriculture & Food Systems"
-      ],
+      "scope": "Domestic",
+      "issueAreas": [],
       "policyIds": [
         "2",
         "4"
       ],
       "columns": {
-        "Tool Identifier": "A1",
+        "Tool Identifier": "1",
         "Tool Title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
-        "Tool Explanation": "Running a FFNPT campaign in your area is a powerful way to get commitments from local officials on phasing out fossil fuels, which can be used as an accountaibility tool later and a pathway to articulating specifically how they'll phase out. check out this guide on how to run one in your area. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Tool Explanation": "Running a FFNPT campaign in your area is a powerful way to get commitments from local officials on phasing out fossil fuels, which can be used as an accountaibility tool later and a pathway to articulating specifically how they'll phase out. [check out this guide on how to run one in your area](https://docs.google.com/document/d/1-nfU6ZMO6Xgmu70gSwr4MZbg55MRqG6TSep2JwYrE1c/edit?usp=sharing). Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
-          "subnational"
+          "Domestic"
         ],
-        "Jurisdiction": [
-          "-",
-          "subnational"
-        ],
-        "UNFCCC Pillar": [
-          "adaptation",
-          "finance"
-        ],
-        "Topic": [
-          "Transportation & Mobility",
-          "Agriculture & Food Systems"
-        ],
-        "Subtopic": [
-          "Public transit, cycling, walking",
-          "Freight and logistics decarbonization",
-          "Reducing food waste across the supply chain"
-        ],
-        "Draft Year": [
-          "2025",
-          "2026"
-        ],
+        "Jurisdiction": "national",
+        "UNFCCC Pillar": "",
+        "Topic": "",
+        "Subtopic": "",
+        "Draft Year": "",
         "Approval Status": "Approved",
         "Archived": "No",
         "Policies": [
-          "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps.",
-          "Deploy statewide multi-hazard early warning systems by 2027 coveringheat, flood, wildfire, and air quality risks with accessible multilingual alertsdelivered through redundant channels (e.g., Maryland, Oregon, Massachusetts,California)."
-        ]
+          "2",
+          "4"
+        ],
+        "Edits": ""
       }
     },
     {
-      "id": "A2",
+      "id": "2",
       "title": "Encourage your Mayor to join the Sustainable Mayors Network",
-      "scope": "subnational",
-      "issueAreas": [
-        "Energy Decarbonization"
-      ],
+      "scope": "Domestic",
+      "issueAreas": [],
       "policyIds": [
         "1"
       ],
       "columns": {
-        "Tool Identifier": "A2",
+        "Tool Identifier": "2",
         "Tool Title": "Encourage your Mayor to join the Sustainable Mayors Network",
         "Tool Explanation": "The Sustainable Mayors Network is a community of practice for local officials to exhange ideas and learn from each others' efforts. It also makes it clear that while our goernment is not acting on climate, there are many people at all levels who are taking climate action. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
-          "subnational"
+          "Domestic"
         ],
-        "Jurisdiction": "-",
-        "UNFCCC Pillar": "\u2060youth engagement",
-        "Topic": [
-          "Energy Decarbonization"
-        ],
-        "Subtopic": "Phasing out fossil fuels in energy systems",
-        "Draft Year": "2025",
-        "Approval Status": "Approved",
+        "Jurisdiction": "subnational",
+        "UNFCCC Pillar": "",
+        "Topic": "",
+        "Subtopic": "",
+        "Draft Year": "",
+        "Approval Status": "Flagged",
         "Archived": "No",
         "Policies": [
-          "Recognize that achieving a Just Transition(s) is inseparable fromdelivering a just, orderly, and equitable phaseout of fossil fuels in line withkeeping 1.5 degrees within reach. A Just Transition requires ensuringequitable global energy security and committing to fully implement thedecisions and pathways identified in the first Global Stocktake, includingthrough updated NDCs and Just Transition Plans no later than 2026."
-        ]
+          "1"
+        ],
+        "Edits": ""
       }
     },
     {
-      "id": "A3",
+      "id": "3",
       "title": "Set up a Bottle Cap Deposit System",
-      "scope": "national",
-      "issueAreas": [
-        "Transportation & Mobility"
-      ],
+      "scope": "Domestic",
+      "issueAreas": [],
       "policyIds": [
         "2"
       ],
       "columns": {
-        "Tool Identifier": "A3",
+        "Tool Identifier": "3",
         "Tool Title": "Set up a Bottle Cap Deposit System",
         "Tool Explanation": "Pfand systems decrease litering and encourage reuse of materials. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         "Scope": [
-          "national"
+          "Domestic"
         ],
-        "Jurisdiction": "-",
-        "UNFCCC Pillar": "adaptation",
-        "Topic": [
-          "Transportation & Mobility"
-        ],
-        "Subtopic": [
-          "Public transit, cycling, walking",
-          "Freight and logistics decarbonization"
-        ],
-        "Draft Year": "2025",
-        "Approval Status": "Approved",
+        "Jurisdiction": "subnational",
+        "UNFCCC Pillar": "",
+        "Topic": "",
+        "Subtopic": "",
+        "Draft Year": "",
+        "Approval Status": "Pending",
         "Archived": "No",
         "Policies": [
-          "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps."
-        ]
+          "2"
+        ],
+        "Edits": ""
       }
     }
   ],
   "policies": [
     {
       "id": "1",
+      "airtableId": "recGykYmsbJDfgbnf",
       "policyText": "Recognize that achieving a Just Transition(s) is inseparable fromdelivering a just, orderly, and equitable phaseout of fossil fuels in line withkeeping 1.5 degrees within reach. A Just Transition requires ensuringequitable global energy security and committing to fully implement thedecisions and pathways identified in the first Global Stocktake, includingthrough updated NDCs and Just Transition Plans no later than 2026.",
       "scope": "International",
       "type": "",
@@ -166,7 +142,7 @@
       ],
       "commentary": "Ambitious long-term plans may seem unrealistic, but many examples exist where they are already being implemented. For exampls SIDS are... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "toolIds": [
-        "A2"
+        "2"
       ],
       "columns": {
         "Policy Identifier": "1",
@@ -178,7 +154,7 @@
           "-"
         ],
         "UNFCCC Pillar": [
-          "\u2060youth engagement"
+          "⁠youth engagement"
         ],
         "Topic": [
           "Energy Decarbonization"
@@ -191,12 +167,14 @@
         "Approval Status": "Approved",
         "Archived": "Yes",
         "Tools": [
-          "Encourage your Mayor to join the Sustainable Mayors Network"
-        ]
+          "2"
+        ],
+        "Edits": ""
       }
     },
     {
       "id": "2",
+      "airtableId": "recnNl9fG6XS8nphK",
       "policyText": "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps.",
       "scope": "International",
       "type": "",
@@ -205,8 +183,8 @@
       ],
       "commentary": "the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "toolIds": [
-        "A3",
-        "A1"
+        "1",
+        "3"
       ],
       "columns": {
         "Policy Identifier": "2",
@@ -232,13 +210,15 @@
         "Approval Status": "Approved",
         "Archived": "No",
         "Tools": [
-          "Set up a Bottle Cap Deposit System",
-          "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
-        ]
+          "1",
+          "3"
+        ],
+        "Edits": ""
       }
     },
     {
       "id": "3",
+      "airtableId": "rece7RQYIE88aW1DW",
       "policyText": "Rejoin the Paris Agreement, and fulfill their role to act on climate changeas agreed under the UNFCCC.",
       "scope": "Domestic",
       "type": "",
@@ -269,11 +249,13 @@
         "Draft Year": "2025",
         "Approval Status": "Approved",
         "Archived": "No",
-        "Tools": ""
+        "Tools": "",
+        "Edits": ""
       }
     },
     {
       "id": "4",
+      "airtableId": "rec07DvAa3RbX5PzP",
       "policyText": "Deploy statewide multi-hazard early warning systems by 2027 coveringheat, flood, wildfire, and air quality risks with accessible multilingual alertsdelivered through redundant channels (e.g., Maryland, Oregon, Massachusetts,California).",
       "scope": "Domestic",
       "type": "",
@@ -282,7 +264,7 @@
       ],
       "commentary": "Many states already have action plans in place that can serve as a reference point... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "toolIds": [
-        "A1"
+        "1"
       ],
       "columns": {
         "Policy Identifier": "4",
@@ -307,12 +289,14 @@
         "Approval Status": "Pending",
         "Archived": "No",
         "Tools": [
-          "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign"
-        ]
+          "1"
+        ],
+        "Edits": ""
       }
     },
     {
       "id": "5",
+      "airtableId": "rec0im8mlW7JT0vhz",
       "policyText": "Test",
       "scope": "International",
       "type": "",
@@ -344,7 +328,8 @@
         "Draft Year": "2027",
         "Approval Status": "Pending",
         "Archived": "No",
-        "Tools": ""
+        "Tools": "",
+        "Edits": ""
       }
     }
   ],
@@ -424,7 +409,7 @@
     {
       "name": "Hard-to-Abate Industries",
       "subtopics": [
-        "Aviation",
+        "Aviation and space",
         "Military and defense",
         "Mining",
         "Petrochemicals and plastics feedstocks",
@@ -449,4 +434,3 @@
     }
   ]
 };
-
