@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-08-03T01:50:06.240Z",
+    "generatedAt": "2026-08-04T01:25:25.657Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -154,7 +154,7 @@ window.NYS_BUILDER_DATA = {
           "-"
         ],
         "UNFCCC Pillar": [
-          "⁠youth engagement"
+          "Just Transition"
         ],
         "Topic": [
           "Energy Decarbonization"
@@ -196,7 +196,7 @@ window.NYS_BUILDER_DATA = {
           "-"
         ],
         "UNFCCC Pillar": [
-          "adaptation"
+          "Adaptation"
         ],
         "Topic": [
           "Transportation & Mobility"
@@ -237,7 +237,7 @@ window.NYS_BUILDER_DATA = {
           "national"
         ],
         "UNFCCC Pillar": [
-          "mitigation"
+          "Mitigation"
         ],
         "Topic": [
           "Transportation & Mobility"
@@ -275,9 +275,7 @@ window.NYS_BUILDER_DATA = {
         "Jurisdiction": [
           "subnational"
         ],
-        "UNFCCC Pillar": [
-          "finance"
-        ],
+        "UNFCCC Pillar": "",
         "Topic": [
           "Agriculture & Food Systems"
         ],
@@ -316,7 +314,7 @@ window.NYS_BUILDER_DATA = {
           "national"
         ],
         "UNFCCC Pillar": [
-          "mitigation"
+          "Mitigation"
         ],
         "Topic": [
           "Agriculture & Food Systems"
