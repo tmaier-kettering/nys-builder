@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-08-28T07:50:16.340Z",
+    "generatedAt": "2026-08-28T19:20:35.615Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -45,6 +45,7 @@ window.NYS_BUILDER_DATA = {
   "tools": [
     {
       "id": "1",
+      "airtableId": "recvvUR2TcswnYlwY",
       "title": "Run a Fossil Fuel Nonproliferation Treaty endorsement campaign",
       "scope": "Domestic",
       "issueAreas": [],
@@ -75,6 +76,7 @@ window.NYS_BUILDER_DATA = {
     },
     {
       "id": "2",
+      "airtableId": "rec8acjMMmNbXJ4rm",
       "title": "Encourage your Mayor to join the Sustainable Mayors Network",
       "scope": "Domestic",
       "issueAreas": [],
@@ -103,6 +105,7 @@ window.NYS_BUILDER_DATA = {
     },
     {
       "id": "3",
+      "airtableId": "recdHbKoyDtugFxFN",
       "title": "Set up a Bottle Cap Deposit System",
       "scope": "Domestic",
       "issueAreas": [],
@@ -121,7 +124,7 @@ window.NYS_BUILDER_DATA = {
         "Topic": "",
         "Subtopic": "",
         "Draft Year": "",
-        "Approval Status": "Pending",
+        "Approval Status": "Approved",
         "Archived": "No",
         "Policies": [
           "2"

@@ -369,32 +369,32 @@ function getRelationshipText(item, label) {
   return relatedTitles.join(', ');
 }
 
-function getRelatedItems(item) {
-  if (pageType === 'policies') {
+function getRelatedItems(item, kind = pageType) {
+  if (kind === 'policies') {
     return item.toolIds.map((id) => state.tools.find((tool) => tool.id === id)).filter(Boolean);
   }
   return item.policyIds.map((id) => state.policies.find((p) => p.id === id)).filter(Boolean);
 }
 
-function getRelatedTooltip(relatedItem) {
+function getRelatedTooltip(relatedItem, relatedKind) {
   const text =
-    pageType === 'policies'
+    relatedKind === 'tools'
       ? formatFieldValue(getColumnValue(relatedItem.columns, 'Tool Explanation'))
       : formatFieldValue(getColumnValue(relatedItem.columns, 'Commentary'));
   if (!text) return '';
   return text.length > 220 ? `${text.slice(0, 220)}\u2026` : text;
 }
 
-function renderRelationField(label, item) {
-  const relatedKind = pageType === 'policies' ? 'tools' : 'policies';
-  const relatedItems = getRelatedItems(item);
+function renderRelationField(label, item, kind = pageType) {
+  const relatedKind = kind === 'policies' ? 'tools' : 'policies';
+  const relatedItems = getRelatedItems(item, kind);
   if (!relatedItems.length) {
     return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value"><span class="muted">N/A</span></span></div>`;
   }
   const listItems = relatedItems
     .map((relatedItem) => {
       const primaryText = getEntityPrimaryText(relatedItem, relatedKind);
-      const tooltip = getRelatedTooltip(relatedItem);
+      const tooltip = getRelatedTooltip(relatedItem, relatedKind);
       return `<li class="related-list-item" data-related-id="${escapeHtml(relatedItem.id)}" data-related-kind="${escapeHtml(relatedKind)}" data-tooltip="${escapeHtml(tooltip)}">${escapeHtml(primaryText)}</li>`;
     })
     .join('');
@@ -406,28 +406,17 @@ function buildSidePanelHtml(item, kind) {
   const metaCols = Array.isArray(sourceData?.metadata?.[config.columnsKey])
     ? sourceData.metadata[config.columnsKey].map((n) => String(n || '').trim()).filter(Boolean)
     : [];
-  const orderedCols = [...new Set([...metaCols, ...Object.keys(item.columns)])];
-  const fields = orderedCols
-    .filter((col) => {
-      if (config.hiddenColumns.some((h) => normalizeFieldName(h) === normalizeFieldName(col))) return false;
-      if (shouldHideColumnForItem(item, col)) return false;
-      if (isChipField(col)) return false;
-      return true;
-    })
-    .map((col) => {
-      const formatted = formatFieldValue(getColumnValue(item.columns, col));
-      if (!formatted) return '';
-      return `<div class="field"><span class="field-label">${escapeHtml(col)}:</span><span class="field-value">${escapeHtml(formatted)}</span></div>`;
-    })
+  const visibleCols = [...new Set([...metaCols, ...Object.keys(item.columns)])].filter((col) => {
+    if (config.hiddenColumns.some((h) => normalizeFieldName(h) === normalizeFieldName(col))) return false;
+    if (shouldHideColumnForItem(item, col)) return false;
+    return true;
+  });
+  const orderedCols = [...visibleCols.filter((col) => !isChipField(col)), ...visibleCols.filter((col) => isChipField(col))];
+  return orderedCols
+    .filter((col) => formatFieldValue(getColumnValue(item.columns, col)))
+    .map((col) => renderField(col, getColumnValue(item.columns, col), item, 'deep-dive', kind))
     .filter(Boolean)
     .join('');
-  const chips = CHIP_FIELDS.flatMap((fieldName) => {
-    if (shouldHideColumnForItem(item, fieldName)) return [];
-    const value = getColumnValue(item.columns, fieldName);
-    if (!value) return [];
-    return asArrayValues(value).map((chipValue) => `<span class="${chipClass(fieldName)}">${escapeHtml(chipValue)}</span>`);
-  }).join('');
-  return `${fields}${chips ? `<div class="card-chips">${chips}</div>` : ''}`;
 }
 
 function openRelatedPanel(itemId, kind) {
@@ -531,11 +520,20 @@ function shouldHideColumnForItem(item, columnName) {
   return shouldHideJurisdiction(item) && normalizeFieldName(columnName) === normalizeFieldName('Jurisdiction');
 }
 
-function renderField(label, value, item) {
+function renderField(label, value, item, cardView, kind = pageType) {
   if (shouldHideColumnForItem(item, label)) return '';
 
-  if (normalizeFieldName(label) === normalizeFieldName(pageConfig.relationField)) {
-    return renderRelationField(label, item);
+  if (normalizeFieldName(label) === normalizeFieldName(PAGE_CONFIGS[kind].relationField)) {
+    return renderRelationField(label, item, kind);
+  }
+
+  if (cardView === 'deep-dive' && isChipField(label)) {
+    const chipsHtml = asArrayValues(value)
+      .map((chipValue) => `<span class="${chipClass(label)}">${escapeHtml(chipValue)}</span>`)
+      .join('');
+    return `<div class="field"><span class="field-label">${escapeHtml(label)}:</span><span class="field-value">${
+      chipsHtml || '<span class="muted">N/A</span>'
+    }</span></div>`;
   }
 
   const text = formatFieldValue(value);
@@ -607,7 +605,10 @@ function cardHtml(item, viewMode) {
   const availableColumns = new Set(state.itemColumns.map((column) => normalizeFieldName(column)));
   const bodyColumns =
     configuredColumns === 'ALL'
-      ? state.itemColumns.filter((column) => !isHiddenColumn(column) && !isChipField(column))
+      ? (() => {
+          const visible = state.itemColumns.filter((column) => !isHiddenColumn(column));
+          return [...visible.filter((column) => !isChipField(column)), ...visible.filter((column) => isChipField(column))];
+        })()
       : configuredColumns.filter((column) => availableColumns.has(normalizeFieldName(column)));
 
   const seenColumns = new Set();
@@ -625,15 +626,18 @@ function cardHtml(item, viewMode) {
       seenColumns.add(normalizedColumn);
       return true;
     })
-    .map(([column, value]) => renderField(column, value, item))
+    .map(([column, value]) => renderField(column, value, item, cardView))
     .join('');
 
-  const chips = CHIP_FIELDS.flatMap((fieldName) => {
-    if (shouldHideColumnForItem(item, fieldName)) return [];
-    const value = getColumnValue(item.columns, fieldName);
-    if (!value) return [];
-    return asArrayValues(value).map((chipValue) => `<span class="${chipClass(fieldName)}">${escapeHtml(chipValue)}</span>`);
-  }).join('');
+  const chips =
+    cardView === 'peruse'
+      ? CHIP_FIELDS.flatMap((fieldName) => {
+          if (shouldHideColumnForItem(item, fieldName)) return [];
+          const value = getColumnValue(item.columns, fieldName);
+          if (!value) return [];
+          return asArrayValues(value).map((chipValue) => `<span class="${chipClass(fieldName)}">${escapeHtml(chipValue)}</span>`);
+        }).join('')
+      : '';
 
   let expandButtons = '';
   if (cardView === 'skim') {
@@ -647,10 +651,11 @@ function cardHtml(item, viewMode) {
   }
 
   let suggestEditBtn = '';
-  if (pageType === 'policies' && item.airtableId) {
+  if (cardView !== 'skim' && item.airtableId) {
     const baseId = sourceData.metadata?.baseId || '';
-    const formUrl = `https://airtable.com/${baseId}/${AIRTABLE_ISSUES_FORM_PAGE_ID}/form?prefill_Issue+Type=Policy&prefill_Policy=${encodeURIComponent(item.airtableId)}`;
-    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✎ Suggest Edit</a>`;
+    const issueType = pageType === 'policies' ? 'Policy' : 'Tool';
+    const formUrl = `https://airtable.com/${baseId}/${AIRTABLE_ISSUES_FORM_PAGE_ID}/form?prefill_Issue+Type=${issueType}&prefill_${issueType}=${encodeURIComponent(item.airtableId)}`;
+    suggestEditBtn = `<a class="card-suggest-edit-btn" href="${escapeHtml(formUrl)}" target="_blank" rel="noopener noreferrer">✎ Suggest Edit</a>`;
   }
 
   let viewAllBtn = '';
@@ -1455,6 +1460,7 @@ function normalizePolicy(policy) {
   const columns = policy.columns && typeof policy.columns === 'object' && !Array.isArray(policy.columns) ? policy.columns : {};
   return {
     id: String(policy.id || '').trim(),
+    airtableId: policy.airtableId || '',
     primaryText: policy.policyText || '',
     scope: formatFieldValue(getColumnValue(columns, 'Scope') || policy.scope),
     issueAreas: asArrayValues(getColumnValue(columns, 'Topic') || policy.issueAreas),
@@ -1469,6 +1475,7 @@ function normalizeTool(tool) {
   const columns = tool.columns && typeof tool.columns === 'object' && !Array.isArray(tool.columns) ? tool.columns : {};
   return {
     id: String(tool.id || '').trim(),
+    airtableId: tool.airtableId || '',
     primaryText:
       tool.title ||
       formatFieldValue(getColumnValue(columns, 'Tool Title')),

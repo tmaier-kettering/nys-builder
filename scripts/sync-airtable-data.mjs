@@ -435,6 +435,7 @@ function buildOutputData(recordsByTable, namedTables) {
 
       return {
         id: tool.id,
+        airtableId: tool.recordId,
         title: tool.title,
         scope: tool.scope,
         issueAreas: tool.issueAreas,

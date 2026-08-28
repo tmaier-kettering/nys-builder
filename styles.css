@@ -409,17 +409,6 @@ h1 {
   color: var(--color-dark-green);
 }
 
-.sidebar-panel > summary.sidebar-summary::before {
-  content: '';
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  border-radius: 7px;
-  background: var(--gradient-primary);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='14' y2='18'/%3E%3C/svg%3E") center / 62% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='14' y2='18'/%3E%3C/svg%3E") center / 62% no-repeat;
-}
-
 .sidebar-panel > summary.sidebar-summary > span:not(.tooltip-icon) {
   margin-right: auto;
 }
@@ -623,7 +612,7 @@ h1 {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.9rem;
   align-items: start;
 }
@@ -842,8 +831,9 @@ footer {
 }
 
 /* ── Collapsible filter sections ────────────────────────────── */
-details.control {
-  margin-bottom: 0;
+details.control,
+.control-static {
+  margin-bottom: 10px;
 }
 
 details.control > summary.filter-header {

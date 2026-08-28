@@ -25,8 +25,8 @@ window.PDF_CONFIG = {
 
   // ---- Policy block styling ----
   policyBlocks: {
-    bandAColor: '#ca2222', // Background color for first/odd band within a section.
-    bandBColor: '#1b498c', // Background color for second/even band within a section.
+    bandAColor: '#e3f1d6', // Background color for first/odd band within a section.
+    bandBColor: '#98cd69', // Background color for second/even band within a section.
     bandInsetX: 6, // How far the band extends beyond text on left and right.
     bandWidthExtra: 12, // Extra total width added to band rectangle (usually 2 * bandInsetX).
     bandOffsetY: 0, // Vertical offset for band rectangle start (positive moves up).
