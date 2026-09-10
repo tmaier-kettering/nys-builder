@@ -53,7 +53,6 @@ const _pdfType = _pdfCfg.typography || {
 };
 
 const PDF_PAGE_MARGIN          = _pdfCfg.pageMargin          ?? 40;
-const PDF_LINE_HEIGHT          = 14; // legacy fallback used by splitTextForPdf
 const PDF_CONTENT_BOTTOM_MARGIN = _pdfCfg.contentBottomMargin ?? 75;
 const PDF_TOC_TITLE_SIZE       = _pdfCfg.tocTitleSize         ?? 22;
 const PDF_FOOTER_TEXT_SIZE     = _pdfCfg.footerTextSize       ?? 10;
@@ -68,11 +67,58 @@ const PDF_TABLE_INDENT         = _pdfCfg.tableIndent          ?? 36;
 const PDF_BRAND_COLORS         = _pdfColors;
 const PDF_BRAND_TYPE           = _pdfType;
 const PDF_FONT_ASSETS          = _pdfCfg.fonts || {};
+const PDF_FOOTER_LOGO_X        = _pdfCfg.footerLogoX          ?? PDF_PAGE_MARGIN;
+const PDF_FOOTER_PAGE_NUMBER_X = _pdfCfg.footerPageNumberX    ?? 16;
+const PDF_FOOTER_BAR_HEIGHT    = _pdfCfg.footerBarHeight      ?? 40;
+const PDF_CHAPTER_COVER_NUMBER_X = _pdfCfg.chapterCoverNumberX ?? 28;
+const PDF_CHAPTER_COVER_NUMBER_Y = _pdfCfg.chapterCoverNumberY ?? 22;
+const PDF_CHAPTER_COVER_NUMBER_SIZE = _pdfCfg.chapterCoverNumberSize ?? 16;
+const PDF_TOC_ENTRY_SIZE       = _pdfCfg.tocEntrySize         ?? 12;
+const PDF_TOC_SUB_ENTRY_INDENT = _pdfCfg.tocSubEntryIndent    ?? 16;
+const PDF_TOC_DOT_LEADER_GAP   = _pdfCfg.tocDotLeaderGap      ?? 4;
 const PDF_ASSETS = {
   coverPage: './assets/first_page.pdf',
-  tableOfContentsBackground: './assets/table_of_contents_background.svg',
-  logo: './assets/LCOY_USA_Logo.png'
+  prefacePage: './assets/preface_page.pdf',
+  overviewPage: './assets/overview_page.pdf',
+  preamblePage: './assets/preamble_page.pdf',
+  internationalCover: './assets/international_cover.pdf',
+  domesticCover: './assets/domestic_cover.pdf',
+  finalPage: './assets/final_page.pdf',
+  tableOfContentsBackground: './assets/toc_background.png',
+  gradientBar: './assets/gradient_bar.png',
+  logo: './assets/footer_logo_white.png'
 };
+
+// Fixed front-matter TOC entries: "What is LCOY USA", "Overview...", "How to use...", and "Preamble"
+// always sit on the same pages (2, 3, 3, 4) because those static pages are always included in the same
+// position, regardless of which policies are selected — so their TOC page numbers are constants, not
+// computed. ponytail: hardcoded because the page positions are fixed by the template itself, not by data.
+const PDF_STATIC_TOC_ENTRIES = [
+  { label: 'What is LCOY USA', page: 2 },
+  { label: 'Overview of the National Youth Statement', page: 3 },
+  { label: 'How to use the National Youth Statement', page: 3 },
+  { label: 'Preamble', page: 4 }
+];
+
+// Sub-grouping rules for the two PDF chapters. International groups by UNFCCC Pillar; Domestic groups by
+// Jurisdiction (Airtable's "national"/"subnational" values map to the design's "Federal"/"Subnational" labels).
+const PDF_CHAPTER_DEFS = [
+  {
+    scope: 'International',
+    coverAssetKey: 'internationalCover',
+    subgroupOrder: ['Mitigation', 'Adaptation', 'Just Transition'],
+    subgroupOf: (item) => asArrayValues(getColumnValue(item.columns, 'UNFCCC Pillar'))[0] || 'Other'
+  },
+  {
+    scope: 'Domestic',
+    coverAssetKey: 'domesticCover',
+    subgroupOrder: ['Federal', 'Subnational'],
+    subgroupOf: (item) => {
+      const raw = (asArrayValues(getColumnValue(item.columns, 'Jurisdiction'))[0] || '').toLowerCase();
+      return { national: 'Federal', subnational: 'Subnational' }[raw] || 'Other';
+    }
+  }
+];
 const FILE_PROTOCOL_ASSET_HINT =
   ' (Tip: serve the app over HTTP, e.g. `python3 -m http.server 8000`, instead of opening index.html directly.)';
 
@@ -233,82 +279,6 @@ async function fetchAssetBytes(path) {
   } catch (error) {
     throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
   }
-}
-
-async function fetchAssetText(path) {
-  try {
-    const response = await fetch(path);
-    if (!response.ok) {
-      throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
-    }
-    return await response.text();
-  } catch (error) {
-    throw new Error(`Failed to load ${path}: ${error.message}${getAssetFetchModeHint()}`);
-  }
-}
-
-async function loadSvgAsPngBytes(path, width, height) {
-  const svgText = await fetchAssetText(path);
-  const blob = new Blob([svgText], { type: 'image/svg+xml' });
-  const objectUrl = URL.createObjectURL(blob);
-
-  try {
-    const image = await new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error(`Unable to decode SVG asset at ${path}`));
-      img.src = objectUrl;
-    });
-
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(width);
-    canvas.height = Math.ceil(height);
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error(
-        'Failed to create 2D canvas context for rendering the table-of-contents background. This may indicate a browser compatibility issue.'
-      );
-    }
-
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/png');
-    const base64 = dataUrl.split(',')[1] || '';
-    return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
-function splitTextForPdf(text, font, fontSize, maxWidth) {
-  const value = formatPdfValue(text);
-  const result = [];
-  const paragraphs = value.split(/\r?\n/);
-
-  paragraphs.forEach((paragraph, paragraphIndex) => {
-    const words = paragraph.trim().split(/\s+/).filter(Boolean);
-
-    if (!words.length) {
-      result.push('');
-    } else {
-      let line = words[0];
-      for (let i = 1; i < words.length; i += 1) {
-        const candidate = `${line} ${words[i]}`;
-        if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
-          line = candidate;
-        } else {
-          result.push(line);
-          line = words[i];
-        }
-      }
-      result.push(line);
-    }
-
-    if (paragraphIndex < paragraphs.length - 1 && result.length > 0 && result[result.length - 1] !== '') {
-      result.push('');
-    }
-  });
-
-  return result;
 }
 
 function downloadPdfBlob(bytes, filename) {
@@ -591,6 +561,34 @@ function buildGroups(items) {
   });
 
   return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+// PDF-export-specific grouping: always splits by scope into fixed International/Domestic chapters
+// (independent of the on-screen groupBy control), omitting a chapter entirely when no selected
+// policy has that scope. See PDF_CHAPTER_DEFS for the per-chapter sub-grouping rule.
+function buildPdfChapters(items) {
+  return PDF_CHAPTER_DEFS.map((chapterDef) => {
+    const chapterItems = items.filter((item) => item.scope === chapterDef.scope);
+    if (!chapterItems.length) return null;
+
+    const subgroups = new Map();
+    chapterItems.forEach((item) => {
+      const key = chapterDef.subgroupOf(item);
+      if (!subgroups.has(key)) subgroups.set(key, []);
+      subgroups.get(key).push(item);
+    });
+
+    const ordered = [...subgroups.entries()].sort(([a], [b]) => {
+      const indexA = chapterDef.subgroupOrder.indexOf(a);
+      const indexB = chapterDef.subgroupOrder.indexOf(b);
+      if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    return { scope: chapterDef.scope, coverAssetKey: chapterDef.coverAssetKey, subgroups: ordered };
+  }).filter(Boolean);
 }
 
 function chipClass(fieldName) {
@@ -882,7 +880,6 @@ async function downloadPdf() {
   if (!commentaryMode) return;
   const includeCommentary = commentaryMode === 'with';
 
-  const grouped = buildGroups(selectedItems);
   const pdfLib = window.PDFLib;
   if (!pdfLib?.PDFDocument || !pdfLib?.StandardFonts || !pdfLib?.rgb) {
     alert('PDF download is temporarily unavailable. Please refresh and try again.');
@@ -927,7 +924,7 @@ async function downloadPdf() {
         }
       }
     } catch (error) {
-      console.warn('Montserrat fonts could not be loaded. Continuing with fallback fonts.', error);
+      console.warn('Brand fonts could not be loaded. Continuing with fallback fonts.', error);
     }
 
     const getFont = (styleName) => fonts[styleName] || fonts.regular;
@@ -951,15 +948,18 @@ async function downloadPdf() {
       return lines;
     };
 
-    let logoImage = null;
-    let logoWidth = 0;
-    let logoHeight = 0;
+    // Cover, front-matter, chapter-cover, and closing pages have no per-selection dynamic content, so
+    // they're copied in wholesale from the user's Canva PDF export rather than redrawn — this preserves
+    // their real embedded fonts/photos exactly (including Object Sans, which pdf-lib never needs to touch).
+    const loadStaticPage = async (assetPath) => {
+      const bytes = await fetchAssetBytes(assetPath);
+      const source = await PDFDocument.load(bytes);
+      const [copied] = await pdfDoc.copyPages(source, [0]);
+      return copied;
+    };
 
     try {
-      const coverPdfBytes = await fetchAssetBytes(PDF_ASSETS.coverPage);
-      const coverSource = await PDFDocument.load(coverPdfBytes);
-      const [coverPage] = await pdfDoc.copyPages(coverSource, [0]);
-      pdfDoc.addPage(coverPage);
+      pdfDoc.addPage(await loadStaticPage(PDF_ASSETS.coverPage));
     } catch (error) {
       console.warn('Cover page asset failed to load. Using fallback cover page.', error);
       const fallbackCover = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -972,6 +972,9 @@ async function downloadPdf() {
       });
     }
 
+    let logoImage = null;
+    let logoWidth = 0;
+    let logoHeight = 0;
     try {
       const logoBytes = await fetchAssetBytes(PDF_ASSETS.logo);
       logoImage = await pdfDoc.embedPng(logoBytes);
@@ -983,14 +986,33 @@ async function downloadPdf() {
       logoImage = null;
     }
 
+    let gradientBarImage = null;
+    try {
+      gradientBarImage = await pdfDoc.embedPng(await fetchAssetBytes(PDF_ASSETS.gradientBar));
+    } catch (error) {
+      console.warn('Gradient bar asset failed to load. Continuing without header/footer bars.', error);
+      gradientBarImage = null;
+    }
+
     let tocBackground = null;
     try {
-      const tocBackgroundBytes = await loadSvgAsPngBytes(PDF_ASSETS.tableOfContentsBackground, pageWidth, pageHeight);
-      tocBackground = await pdfDoc.embedPng(tocBackgroundBytes);
+      tocBackground = await pdfDoc.embedPng(await fetchAssetBytes(PDF_ASSETS.tableOfContentsBackground));
     } catch (error) {
       console.warn('TOC background asset failed to load. Continuing without TOC background.', error);
       tocBackground = null;
     }
+
+    const whiteColor = hexToPdfRgb(PDF_BRAND_COLORS.white || '#ffffff', rgb);
+
+    // Visible page numbering starts at the TOC (labeled "1"), matching the source design — the cover
+    // is unnumbered, like a book's title page.
+    let visibleNumber = 0;
+    const advance = () => {
+      visibleNumber += 1;
+      return visibleNumber;
+    };
+    const dynamicFooterPages = []; // pages needing the full gradient bar + logo + number (TOC, content pages)
+    const chapterCoverPages = []; // static chapter-cover pages needing just the page number overlaid
 
     const tocPage = pdfDoc.addPage([pageWidth, pageHeight]);
     if (tocBackground) {
@@ -1000,20 +1022,33 @@ async function downloadPdf() {
       x: PDF_PAGE_MARGIN,
       y: pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE,
       size: PDF_TOC_TITLE_SIZE,
-      font: getFont('extraBold'),
-      color: palette.heading
+      font: getFont('antonioBold'),
+      color: whiteColor
     });
+    dynamicFooterPages.push({ page: tocPage, number: advance() });
 
-    let page = pdfDoc.addPage([pageWidth, pageHeight]);
-    let cursorY = pageHeight - PDF_PAGE_MARGIN;
-    const groupStartPages = new Map();
-    let currentContentPageNumber = 1;
+    for (const assetKey of ['prefacePage', 'overviewPage', 'preamblePage']) {
+      try {
+        pdfDoc.addPage(await loadStaticPage(PDF_ASSETS[assetKey]));
+        advance();
+      } catch (error) {
+        console.warn(`${assetKey} asset failed to load and was omitted from the PDF.`, error);
+      }
+    }
+
+    let page = null;
+    let cursorY = 0;
+
+    const startNewContentPage = () => {
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      cursorY = pageHeight - PDF_PAGE_MARGIN;
+      dynamicFooterPages.push({ page, number: advance() });
+      return page;
+    };
 
     const ensureSpace = (requiredHeight) => {
-      if (cursorY - requiredHeight < PDF_CONTENT_BOTTOM_MARGIN) {
-        page = pdfDoc.addPage([pageWidth, pageHeight]);
-        currentContentPageNumber += 1;
-        cursorY = pageHeight - PDF_PAGE_MARGIN;
+      if (!page || cursorY - requiredHeight < PDF_CONTENT_BOTTOM_MARGIN) {
+        startNewContentPage();
       }
     };
 
@@ -1248,108 +1283,164 @@ async function downloadPdf() {
       cursorY -= blockPaddingBottom;
     };
 
-    writeSimpleWrapped('Policies from the National Youth Statement on Climate', {
-      style: 'heading1',
-      color: palette.heading,
-      justify: false,
-      spacingAfter: 6
-    });
-
+    const groupStartPages = new Map();
     let policyNumber = 1;
-    grouped.forEach(([title, items]) => {
-      if (!groupStartPages.has(title)) groupStartPages.set(title, currentContentPageNumber);
-      writeSimpleWrapped(title, {
-        style: 'heading2',
-        color: palette.heading,
-        underline: false,
-        spacingAfter: 6
-      });
+    const chapters = buildPdfChapters(selectedItems);
 
-      items.forEach((item, groupPolicyIndex) => {
-        writePolicyBlock(
-          policyNumber,
-          getColumnValue(item.columns, pageConfig.primaryField),
-          getColumnValue(item.columns, 'Commentary'),
-          groupPolicyIndex
-        );
-        policyNumber += 1;
-      });
-    });
+    const chapteredCount = chapters.reduce(
+      (sum, chapter) => sum + chapter.subgroups.reduce((subSum, [, items]) => subSum + items.length, 0),
+      0
+    );
+    if (chapteredCount < selectedItems.length) {
+      console.warn(
+        `${selectedItems.length - chapteredCount} selected item(s) have a scope other than International/Domestic and were omitted from the PDF.`
+      );
+    }
 
+    for (const chapter of chapters) {
+      try {
+        const chapterCoverPage = await loadStaticPage(PDF_ASSETS[chapter.coverAssetKey]);
+        pdfDoc.addPage(chapterCoverPage);
+        const coverNumber = advance();
+        chapterCoverPages.push({ page: chapterCoverPage, number: coverNumber });
+        groupStartPages.set(chapter.scope, coverNumber);
+      } catch (error) {
+        console.warn(`Chapter cover asset failed to load for ${chapter.scope}.`, error);
+      }
+
+      page = null; // force a fresh page so this chapter's content never continues on a previous page
+
+      chapter.subgroups.forEach(([subgroupLabel, items]) => {
+        const fullLabel = `${chapter.scope} - ${subgroupLabel}`;
+        if (!groupStartPages.has(fullLabel)) {
+          groupStartPages.set(fullLabel, page ? visibleNumber : visibleNumber + 1);
+        }
+        writeSimpleWrapped(fullLabel, {
+          style: 'heading2',
+          color: palette.heading,
+          spacingAfter: 6
+        });
+
+        items.forEach((item, groupPolicyIndex) => {
+          writePolicyBlock(
+            policyNumber,
+            getColumnValue(item.columns, pageConfig.primaryField),
+            getColumnValue(item.columns, 'Commentary'),
+            groupPolicyIndex
+          );
+          policyNumber += 1;
+        });
+      });
+    }
+
+    let finalPageNumber = null;
+    try {
+      pdfDoc.addPage(await loadStaticPage(PDF_ASSETS.finalPage));
+      finalPageNumber = advance();
+    } catch (error) {
+      console.warn('Final page asset failed to load and was omitted from the PDF.', error);
+    }
+
+    // ---- Table of contents: fixed front-matter entries, then only the chapters/subgroups present ----
+    const tocEntries = [
+      ...PDF_STATIC_TOC_ENTRIES.map((entry) => ({ label: entry.label, page: entry.page, indent: 0 })),
+      ...chapters.flatMap((chapter) => [
+        { label: chapter.scope, page: groupStartPages.get(chapter.scope) ?? null, indent: 0 },
+        ...chapter.subgroups.map(([subgroupLabel]) => ({
+          label: `${chapter.scope} - ${subgroupLabel}`,
+          page: groupStartPages.get(`${chapter.scope} - ${subgroupLabel}`) ?? null,
+          indent: PDF_TOC_SUB_ENTRY_INDENT
+        }))
+      ]),
+      ...(finalPageNumber ? [{ label: 'Learn More', page: finalPageNumber, indent: 0 }] : [])
+    ];
+
+    const buildDotLeader = (font, size, width) => {
+      const unit = '. ';
+      const unitWidth = font.widthOfTextAtSize(unit, size);
+      if (unitWidth <= 0 || width <= 0) return '';
+      return unit.repeat(Math.floor(width / unitWidth));
+    };
+
+    const tocFont = getFont(PDF_BRAND_TYPE.normal.style);
+    const tocNumberFont = getFont('antonioBold');
     let tocCursorY = pageHeight - PDF_PAGE_MARGIN - PDF_TOC_TITLE_SIZE - 28;
-    let tocTruncated = false;
-    for (const [title] of grouped) {
-      const numberLabel = groupStartPages.has(title) ? String(groupStartPages.get(title)) : '-';
-      const tocFont = getFont(PDF_BRAND_TYPE.normal.style);
-      const numberWidth = tocFont.widthOfTextAtSize(numberLabel, 12);
-      const maxEntryWidth = pageWidth - PDF_PAGE_MARGIN * 2 - numberWidth - 20;
-      const entryLines = splitTextForPdf(title, tocFont, 12, maxEntryWidth);
-      const blockHeight = Math.max(entryLines.length, 1) * lineHeight(12) + 4;
-      if (tocCursorY - blockHeight < PDF_CONTENT_BOTTOM_MARGIN) {
-        tocTruncated = true;
+
+    for (const entry of tocEntries) {
+      if (tocCursorY - lineHeight(PDF_TOC_ENTRY_SIZE) < PDF_CONTENT_BOTTOM_MARGIN) {
+        tocPage.drawText('Additional sections omitted from this page.', {
+          x: PDF_PAGE_MARGIN,
+          y: PDF_CONTENT_BOTTOM_MARGIN - 12,
+          size: 10,
+          font: tocFont,
+          color: palette.body
+        });
         break;
       }
 
-      for (let index = 0; index < entryLines.length; index += 1) {
-        const line = entryLines[index];
-        if (tocCursorY - lineHeight(12) < PDF_CONTENT_BOTTOM_MARGIN) {
-          tocTruncated = true;
-          break;
-        }
-        tocPage.drawText(line, {
-          x: PDF_PAGE_MARGIN,
-          y: tocCursorY,
-          size: 12,
-          font: tocFont,
-          color: palette.heading
-        });
+      const numberLabel = entry.page != null ? String(entry.page) : '-';
+      const x = PDF_PAGE_MARGIN + entry.indent;
+      const numberWidth = tocNumberFont.widthOfTextAtSize(numberLabel, PDF_TOC_ENTRY_SIZE);
+      const labelWidth = tocFont.widthOfTextAtSize(entry.label, PDF_TOC_ENTRY_SIZE);
+      const dotsWidth = pageWidth - PDF_PAGE_MARGIN - x - labelWidth - numberWidth - PDF_TOC_DOT_LEADER_GAP * 2;
+      const dots = buildDotLeader(tocFont, PDF_TOC_ENTRY_SIZE, dotsWidth);
 
-        if (index === 0) {
-          tocPage.drawText(numberLabel, {
-            x: pageWidth - PDF_PAGE_MARGIN - numberWidth,
-            y: tocCursorY,
-            size: 12,
-            font: getFont('extraBold'),
-            color: palette.heading
-          });
-        }
-
-        tocCursorY -= lineHeight(12);
-      }
-
-      if (tocTruncated) break;
-      tocCursorY -= 4;
-    }
-
-    if (tocTruncated) {
-      tocPage.drawText('Additional sections omitted from this page.', {
-        x: PDF_PAGE_MARGIN,
-        y: PDF_CONTENT_BOTTOM_MARGIN - 12,
-        size: 10,
-        font: getFont(PDF_BRAND_TYPE.normal.style),
+      tocPage.drawText(entry.label, { x, y: tocCursorY, size: PDF_TOC_ENTRY_SIZE, font: tocFont, color: palette.body });
+      tocPage.drawText(dots, {
+        x: x + labelWidth + PDF_TOC_DOT_LEADER_GAP,
+        y: tocCursorY,
+        size: PDF_TOC_ENTRY_SIZE,
+        font: tocFont,
+        color: palette.body
+      });
+      tocPage.drawText(numberLabel, {
+        x: pageWidth - PDF_PAGE_MARGIN - numberWidth,
+        y: tocCursorY,
+        size: PDF_TOC_ENTRY_SIZE,
+        font: tocNumberFont,
         color: palette.heading
       });
+
+      tocCursorY -= lineHeight(PDF_TOC_ENTRY_SIZE) + 4;
     }
 
-    pdfDoc.getPages().forEach((pdfPage, index) => {
-      if (index < 2) return;
-
-      const pageNumberLabel = String(index - 1);
-      const pageNumberWidth = getFont(PDF_BRAND_TYPE.normal.style).widthOfTextAtSize(pageNumberLabel, PDF_FOOTER_TEXT_SIZE);
-      if (logoImage) {
-        pdfPage.drawImage(logoImage, {
-          x: PDF_PAGE_MARGIN,
-          y: PDF_FOOTER_LOGO_Y,
-          width: logoWidth,
-          height: logoHeight
-        });
+    // ---- Footer chrome ----
+    // TOC + dynamic content pages have no baked chrome, so they get the full gradient bar/logo/number.
+    // Chapter-cover pages already have baked chrome from the source PDF — they only need their page
+    // number overlaid on the "#" placeholder the design left for it. Cover/front-matter/final pages
+    // keep their own baked-in chrome untouched (fixed position, so any baked-in number is already correct).
+    dynamicFooterPages.forEach(({ page: footerPage, number }) => {
+      if (gradientBarImage) {
+        footerPage.drawImage(gradientBarImage, { x: 0, y: 0, width: pageWidth, height: PDF_FOOTER_BAR_HEIGHT });
       }
-      pdfPage.drawText(pageNumberLabel, {
-        x: pageWidth - PDF_PAGE_MARGIN - pageNumberWidth,
+      if (logoImage) {
+        footerPage.drawImage(logoImage, { x: PDF_FOOTER_LOGO_X, y: PDF_FOOTER_LOGO_Y, width: logoWidth, height: logoHeight });
+      }
+      footerPage.drawText(String(number), {
+        x: PDF_FOOTER_PAGE_NUMBER_X,
         y: PDF_FOOTER_PAGE_NUMBER_Y,
         size: PDF_FOOTER_TEXT_SIZE,
-        font: getFont(PDF_BRAND_TYPE.normal.style),
-        color: palette.heading
+        font: getFont('extraBold'),
+        color: whiteColor
+      });
+    });
+
+    chapterCoverPages.forEach(({ page: coverPage, number }) => {
+      // The source PDF leaves a literal "#" placeholder glyph at this spot (Canva couldn't know the
+      // real page number in advance) — patch it out with the bar's own color before drawing the number.
+      coverPage.drawRectangle({
+        x: PDF_CHAPTER_COVER_NUMBER_X - 6,
+        y: PDF_CHAPTER_COVER_NUMBER_Y - 6,
+        width: 24,
+        height: 30,
+        color: hexToPdfRgb(PDF_BRAND_COLORS.teal || '#089bab', rgb)
+      });
+      coverPage.drawText(String(number), {
+        x: PDF_CHAPTER_COVER_NUMBER_X,
+        y: PDF_CHAPTER_COVER_NUMBER_Y,
+        size: PDF_CHAPTER_COVER_NUMBER_SIZE,
+        font: getFont('antonioBold'),
+        color: whiteColor
       });
     });
 
@@ -1359,6 +1450,7 @@ async function downloadPdf() {
     alert(`Unable to generate PDF: ${error.message}`);
   }
 }
+
 function setViewMode(view) {
   state.viewMode = view;
   els.viewLevelSelector.querySelectorAll('.view-level-btn').forEach((button) => {
