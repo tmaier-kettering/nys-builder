@@ -1432,7 +1432,7 @@ async function downloadPdf() {
         x: PDF_CHAPTER_COVER_NUMBER_X - 6,
         y: PDF_CHAPTER_COVER_NUMBER_Y - 6,
         width: 24,
-        height: 30,
+        height: 40,
         color: hexToPdfRgb(PDF_BRAND_COLORS.teal || '#089bab', rgb)
       });
       coverPage.drawText(String(number), {
