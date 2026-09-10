@@ -10,16 +10,20 @@ window.PDF_CONFIG = {
   contentBottomMargin: 75, // Bottom boundary for content so footer area stays clear.
 
   // ---- Footer ----
-  footerTextSize: 10, // Page number font size in the footer.
-  footerLogoMaxWidth: 90, // Maximum rendered width for footer logo.
-  footerLogoY: 12, // Y position (from page bottom) for footer logo.
-  footerLogoX: 40, // X position (from page left) for footer logo — left-aligned per the new design.
-  footerPageNumberY: 18, // Y position (from page bottom) for page number text.
-  footerPageNumberX: 16, // X position (from page left) for the page number badge, left of the logo.
-  footerBarHeight: 40, // Height of the gradient footer bar drawn behind the logo/page number.
-  chapterCoverNumberX: 28, // X position for the page-number overlay on chapter-cover pages (matches the source PDF's "#" placeholder baseline).
-  chapterCoverNumberY: 22, // Y position for the page-number overlay on chapter-cover pages.
-  chapterCoverNumberSize: 16, // Font size for the chapter-cover page-number overlay (matches the source placeholder's size).
+  // All measured directly from the source Canva PDF's baked-in footer (preface/overview/preamble
+  // pages) so the dynamically-drawn footer (TOC, content pages) matches it exactly — these same
+  // footerPageNumber*/footerTextSize values are also reused to overlay the number on chapter-cover
+  // pages, since that's the identical design element, just baked vs. drawn.
+  footerTextSize: 16, // Page number font size in the footer (Antonio Bold, matches the source).
+  footerLogoMaxWidth: 159, // Rendered width for footer logo (source logo image frame is 159x119.25pt).
+  footerLogoY: -28, // Y position (from page bottom) for footer logo — the source bleeds slightly below the page edge.
+  footerLogoX: 57, // X position (from page left) for footer logo.
+  footerPageNumberY: 22, // Y position (from page bottom) for page number text.
+  footerPageNumberX: 29, // X position (from page left) for the page number, left of the logo.
+  footerBarHeight: 65, // Visible height of the gradient footer bar (source image bleeds further below the page edge).
+  footerDividerGap: 24, // Horizontal gap between the logo's right edge and the start of the footer divider line.
+  footerDividerThickness: 5.25, // Stroke thickness of the footer divider line.
+  footerDividerY: 32, // Y position (from page bottom) for the footer divider line.
 
   // ---- Table of contents ----
   tocTitleSize: 22, // Font size of the "Table of Contents" title.

@@ -55,24 +55,24 @@ const _pdfType = _pdfCfg.typography || {
 const PDF_PAGE_MARGIN          = _pdfCfg.pageMargin          ?? 40;
 const PDF_CONTENT_BOTTOM_MARGIN = _pdfCfg.contentBottomMargin ?? 75;
 const PDF_TOC_TITLE_SIZE       = _pdfCfg.tocTitleSize         ?? 22;
-const PDF_FOOTER_TEXT_SIZE     = _pdfCfg.footerTextSize       ?? 10;
+const PDF_FOOTER_TEXT_SIZE     = _pdfCfg.footerTextSize       ?? 16;
 const PDF_PAGE_WIDTH           = _pdfCfg.pageWidth            ?? 612;
 const PDF_PAGE_HEIGHT          = _pdfCfg.pageHeight           ?? 792;
-const PDF_FOOTER_LOGO_Y        = _pdfCfg.footerLogoY          ?? 18;
-const PDF_FOOTER_PAGE_NUMBER_Y = _pdfCfg.footerPageNumberY    ?? 24;
-const PDF_LOGO_MAX_WIDTH       = _pdfCfg.footerLogoMaxWidth   ?? 90;
+const PDF_FOOTER_LOGO_Y        = _pdfCfg.footerLogoY          ?? -28;
+const PDF_FOOTER_PAGE_NUMBER_Y = _pdfCfg.footerPageNumberY    ?? 22;
+const PDF_LOGO_MAX_WIDTH       = _pdfCfg.footerLogoMaxWidth   ?? 159;
 const PDF_LABEL_COLUMN_WIDTH   = _pdfCfg.labelColumnWidth     ?? 108;
 const PDF_TABLE_COLUMN_GAP     = _pdfCfg.tableColumnGap       ?? 12;
 const PDF_TABLE_INDENT         = _pdfCfg.tableIndent          ?? 36;
 const PDF_BRAND_COLORS         = _pdfColors;
 const PDF_BRAND_TYPE           = _pdfType;
 const PDF_FONT_ASSETS          = _pdfCfg.fonts || {};
-const PDF_FOOTER_LOGO_X        = _pdfCfg.footerLogoX          ?? PDF_PAGE_MARGIN;
-const PDF_FOOTER_PAGE_NUMBER_X = _pdfCfg.footerPageNumberX    ?? 16;
-const PDF_FOOTER_BAR_HEIGHT    = _pdfCfg.footerBarHeight      ?? 40;
-const PDF_CHAPTER_COVER_NUMBER_X = _pdfCfg.chapterCoverNumberX ?? 28;
-const PDF_CHAPTER_COVER_NUMBER_Y = _pdfCfg.chapterCoverNumberY ?? 22;
-const PDF_CHAPTER_COVER_NUMBER_SIZE = _pdfCfg.chapterCoverNumberSize ?? 16;
+const PDF_FOOTER_LOGO_X        = _pdfCfg.footerLogoX          ?? 57;
+const PDF_FOOTER_PAGE_NUMBER_X = _pdfCfg.footerPageNumberX    ?? 29;
+const PDF_FOOTER_BAR_HEIGHT    = _pdfCfg.footerBarHeight      ?? 65;
+const PDF_FOOTER_DIVIDER_GAP   = _pdfCfg.footerDividerGap     ?? 24;
+const PDF_FOOTER_DIVIDER_THICKNESS = _pdfCfg.footerDividerThickness ?? 5.25;
+const PDF_FOOTER_DIVIDER_Y     = _pdfCfg.footerDividerY       ?? 32;
 const PDF_TOC_ENTRY_SIZE       = _pdfCfg.tocEntrySize         ?? 12;
 const PDF_TOC_SUB_ENTRY_INDENT = _pdfCfg.tocSubEntryIndent    ?? 16;
 const PDF_TOC_DOT_LEADER_GAP   = _pdfCfg.tocDotLeaderGap      ?? 4;
@@ -1416,29 +1416,36 @@ async function downloadPdf() {
       if (logoImage) {
         footerPage.drawImage(logoImage, { x: PDF_FOOTER_LOGO_X, y: PDF_FOOTER_LOGO_Y, width: logoWidth, height: logoHeight });
       }
+      footerPage.drawLine({
+        start: { x: PDF_FOOTER_LOGO_X + logoWidth + PDF_FOOTER_DIVIDER_GAP, y: PDF_FOOTER_DIVIDER_Y },
+        end: { x: pageWidth, y: PDF_FOOTER_DIVIDER_Y },
+        thickness: PDF_FOOTER_DIVIDER_THICKNESS,
+        color: whiteColor
+      });
       footerPage.drawText(String(number), {
         x: PDF_FOOTER_PAGE_NUMBER_X,
         y: PDF_FOOTER_PAGE_NUMBER_Y,
         size: PDF_FOOTER_TEXT_SIZE,
-        font: getFont('extraBold'),
+        font: getFont('antonioBold'),
         color: whiteColor
       });
     });
 
     chapterCoverPages.forEach(({ page: coverPage, number }) => {
       // The source PDF leaves a literal "#" placeholder glyph at this spot (Canva couldn't know the
-      // real page number in advance) — patch it out with the bar's own color before drawing the number.
+      // real page number in advance) — patch it out with the bar's own color before drawing the number,
+      // using the same position/size as the dynamic footer so every page's number lines up identically.
       coverPage.drawRectangle({
-        x: PDF_CHAPTER_COVER_NUMBER_X - 6,
-        y: PDF_CHAPTER_COVER_NUMBER_Y - 6,
+        x: PDF_FOOTER_PAGE_NUMBER_X - 6,
+        y: PDF_FOOTER_PAGE_NUMBER_Y - 6,
         width: 24,
         height: 40,
         color: hexToPdfRgb(PDF_BRAND_COLORS.teal || '#089bab', rgb)
       });
       coverPage.drawText(String(number), {
-        x: PDF_CHAPTER_COVER_NUMBER_X,
-        y: PDF_CHAPTER_COVER_NUMBER_Y,
-        size: PDF_CHAPTER_COVER_NUMBER_SIZE,
+        x: PDF_FOOTER_PAGE_NUMBER_X,
+        y: PDF_FOOTER_PAGE_NUMBER_Y,
+        size: PDF_FOOTER_TEXT_SIZE,
         font: getFont('antonioBold'),
         color: whiteColor
       });
