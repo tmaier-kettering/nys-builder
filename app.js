@@ -59,7 +59,7 @@ const PDF_FOOTER_TEXT_SIZE     = _pdfCfg.footerTextSize       ?? 16;
 const PDF_PAGE_WIDTH           = _pdfCfg.pageWidth            ?? 612;
 const PDF_PAGE_HEIGHT          = _pdfCfg.pageHeight           ?? 792;
 const PDF_FOOTER_LOGO_Y        = _pdfCfg.footerLogoY          ?? -28;
-const PDF_FOOTER_PAGE_NUMBER_Y = _pdfCfg.footerPageNumberY    ?? 22;
+const PDF_FOOTER_PAGE_NUMBER_Y = _pdfCfg.footerPageNumberY    ?? 27;
 const PDF_LOGO_MAX_WIDTH       = _pdfCfg.footerLogoMaxWidth   ?? 159;
 const PDF_LABEL_COLUMN_WIDTH   = _pdfCfg.labelColumnWidth     ?? 108;
 const PDF_TABLE_COLUMN_GAP     = _pdfCfg.tableColumnGap       ?? 12;
@@ -1444,19 +1444,25 @@ async function downloadPdf() {
     });
 
     chapterCoverPages.forEach(({ page: coverPage, number }) => {
+      // Copied pages keep the source PDF's own MediaBox, which (a Canva export quirk) has a non-zero
+      // lower-left y — unlike our freshly-created pages, which start at (0,0). Content-stream
+      // coordinates are absolute within that MediaBox, so anything we draw here needs this offset
+      // added or it lands ~8pt too low relative to the same coordinates on a fresh page.
+      const { y: mediaBoxY } = coverPage.getMediaBox();
+
       // The source PDF leaves a literal "#" placeholder glyph at this spot (Canva couldn't know the
       // real page number in advance) — patch it out with the bar's own color before drawing the number,
       // using the same position/size as the dynamic footer so every page's number lines up identically.
       coverPage.drawRectangle({
         x: PDF_FOOTER_PAGE_NUMBER_X - 6,
-        y: PDF_FOOTER_PAGE_NUMBER_Y - 6,
+        y: mediaBoxY + PDF_FOOTER_PAGE_NUMBER_Y - 6,
         width: 24,
         height: 40,
         color: hexToPdfRgb(PDF_BRAND_COLORS.teal || '#089bab', rgb)
       });
       coverPage.drawText(String(number), {
         x: PDF_FOOTER_PAGE_NUMBER_X,
-        y: PDF_FOOTER_PAGE_NUMBER_Y,
+        y: mediaBoxY + PDF_FOOTER_PAGE_NUMBER_Y,
         size: PDF_FOOTER_TEXT_SIZE,
         font: getFont('antonioBold'),
         color: whiteColor

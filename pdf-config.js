@@ -18,7 +18,7 @@ window.PDF_CONFIG = {
   footerLogoMaxWidth: 159, // Rendered width for footer logo (source logo image frame is 159x119.25pt).
   footerLogoY: -28, // Y position (from page bottom) for footer logo — the source bleeds slightly below the page edge.
   footerLogoX: 57, // X position (from page left) for footer logo.
-  footerPageNumberY: 22, // Y position (from page bottom) for page number text.
+  footerPageNumberY: 27, // Y position (from page bottom) for page number text — this is the text BASELINE, measured from the actual rendered glyph ink (font bbox metrics overstate descender space for digits).
   footerPageNumberX: 29, // X position (from page left) for the page number, left of the logo.
   footerBarHeight: 65, // Visible height of the gradient footer bar (source image bleeds further below the page edge).
   footerDividerGap: 24, // Horizontal gap between the logo's right edge and the start of the footer divider line.
