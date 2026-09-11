@@ -73,6 +73,10 @@ const PDF_FOOTER_BAR_HEIGHT    = _pdfCfg.footerBarHeight      ?? 65;
 const PDF_FOOTER_DIVIDER_GAP   = _pdfCfg.footerDividerGap     ?? 24;
 const PDF_FOOTER_DIVIDER_THICKNESS = _pdfCfg.footerDividerThickness ?? 5.25;
 const PDF_FOOTER_DIVIDER_Y     = _pdfCfg.footerDividerY       ?? 32;
+const PDF_TOP_BAR_X            = _pdfCfg.topBarX              ?? 34;
+const PDF_TOP_BAR_Y            = _pdfCfg.topBarY              ?? 774;
+const PDF_TOP_BAR_WIDTH        = _pdfCfg.topBarWidth          ?? 544;
+const PDF_TOP_BAR_HEIGHT       = _pdfCfg.topBarHeight         ?? 35.5;
 const PDF_TOC_ENTRY_SIZE       = _pdfCfg.tocEntrySize         ?? 12;
 const PDF_TOC_SUB_ENTRY_INDENT = _pdfCfg.tocSubEntryIndent    ?? 16;
 const PDF_TOC_DOT_LEADER_GAP   = _pdfCfg.tocDotLeaderGap      ?? 4;
@@ -1041,6 +1045,14 @@ async function downloadPdf() {
 
     const startNewContentPage = () => {
       page = pdfDoc.addPage([pageWidth, pageHeight]);
+      if (gradientBarImage) {
+        page.drawImage(gradientBarImage, {
+          x: PDF_TOP_BAR_X,
+          y: PDF_TOP_BAR_Y,
+          width: PDF_TOP_BAR_WIDTH,
+          height: PDF_TOP_BAR_HEIGHT
+        });
+      }
       cursorY = pageHeight - PDF_PAGE_MARGIN;
       dynamicFooterPages.push({ page, number: advance() });
       return page;

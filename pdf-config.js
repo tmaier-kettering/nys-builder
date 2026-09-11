@@ -25,6 +25,14 @@ window.PDF_CONFIG = {
   footerDividerThickness: 5.25, // Stroke thickness of the footer divider line.
   footerDividerY: 32, // Y position (from page bottom) for the footer divider line.
 
+  // ---- Top accent bar ----
+  // The static content-style pages (Preface/Overview/Preamble) have a thin gradient bar at the very
+  // top edge — measured from the source PDF so dynamically-drawn content pages match it too.
+  topBarX: 34, // X position (from page left) for the top accent bar.
+  topBarY: 774, // Y position (from page bottom) for the top accent bar's bottom edge — bleeds above the page top.
+  topBarWidth: 544, // Width of the top accent bar.
+  topBarHeight: 35.5, // Height of the top accent bar.
+
   // ---- Table of contents ----
   tocTitleSize: 22, // Font size of the "Table of Contents" title.
   tocEntrySize: 12, // Font size of TOC entry lines.
