@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-09-13T21:36:43.945Z",
+    "generatedAt": "2026-09-14T02:18:05.513Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -60,7 +60,9 @@ window.NYS_BUILDER_DATA = {
         "Scope": [
           "Domestic"
         ],
-        "Jurisdiction": "national",
+        "Jurisdiction": [
+          "national"
+        ],
         "UNFCCC Pillar": "",
         "Topic": "",
         "Subtopic": "",
@@ -90,7 +92,9 @@ window.NYS_BUILDER_DATA = {
         "Scope": [
           "Domestic"
         ],
-        "Jurisdiction": "subnational",
+        "Jurisdiction": [
+          "subnational"
+        ],
         "UNFCCC Pillar": "",
         "Topic": "",
         "Subtopic": "",
@@ -119,7 +123,9 @@ window.NYS_BUILDER_DATA = {
         "Scope": [
           "Domestic"
         ],
-        "Jurisdiction": "subnational",
+        "Jurisdiction": [
+          "subnational"
+        ],
         "UNFCCC Pillar": "",
         "Topic": "",
         "Subtopic": "",
