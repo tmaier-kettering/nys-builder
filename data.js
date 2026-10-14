@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-10-13T04:29:01.711Z",
+    "generatedAt": "2026-10-14T07:50:24.744Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -135,6 +135,52 @@ window.NYS_BUILDER_DATA = {
         "Policies": [
           "2"
         ],
+        "Edits": ""
+      }
+    },
+    {
+      "id": "4",
+      "airtableId": "recqdPUYeGWr2uPQI",
+      "title": "Untitled Tool",
+      "scope": "",
+      "issueAreas": [],
+      "policyIds": [],
+      "columns": {
+        "Tool Identifier": "4",
+        "Tool Title": "",
+        "Tool Explanation": "",
+        "Scope": "",
+        "Jurisdiction": "",
+        "UNFCCC Pillar": "",
+        "Topic": "",
+        "Subtopic": "",
+        "Draft Year": "",
+        "Approval Status": "Pending",
+        "Archived": "No",
+        "Policies": "",
+        "Edits": ""
+      }
+    },
+    {
+      "id": "5",
+      "airtableId": "recHuctVlKl8DymXa",
+      "title": "Untitled Tool",
+      "scope": "",
+      "issueAreas": [],
+      "policyIds": [],
+      "columns": {
+        "Tool Identifier": "5",
+        "Tool Title": "",
+        "Tool Explanation": "",
+        "Scope": "",
+        "Jurisdiction": "",
+        "UNFCCC Pillar": "",
+        "Topic": "",
+        "Subtopic": "",
+        "Draft Year": "",
+        "Approval Status": "Pending",
+        "Archived": "No",
+        "Policies": "",
         "Edits": ""
       }
     }
@@ -359,6 +405,44 @@ window.NYS_BUILDER_DATA = {
           "Funding adaptation and mitigation"
         ],
         "Commentary": "This is a test",
+        "Draft Year": "2026",
+        "Approval Status": "Approved",
+        "Archived": "No",
+        "Tools": "",
+        "Edits": ""
+      }
+    },
+    {
+      "id": "17",
+      "airtableId": "recPfqvAfGdBrJk68",
+      "policyText": "Adopt equitable building performance standards for existing commercial and multi-family residential buildings larger than 20,000 square feet, as well as all existing government buildings, that mandate net-zero emissions by 2040.",
+      "scope": "Domestic",
+      "type": "",
+      "issueAreas": [
+        "Buildings, Cities & Urban Systems"
+      ],
+      "commentary": "Achieving net-zero building emissions by 2040 can serve as an interim milestone toward fully zero-carbon buildings by 2050. To ensure an equitable transition, building performance standards should be accompanied by funding and technical assistance, particularly for schools, low-income housing, and small businesses. Frontline and marginalized communities should have meaningful opportunities to participate in policy development and implementation. Tenant protections are also essential to ensure that building upgrades do not lead to displacement or unreasonable rent increases.",
+      "toolIds": [],
+      "columns": {
+        "Policy Identifier": "17",
+        "Policy": "Adopt equitable building performance standards for existing commercial and multi-family residential buildings larger than 20,000 square feet, as well as all existing government buildings, that mandate net-zero emissions by 2040.",
+        "Scope": [
+          "Domestic"
+        ],
+        "Jurisdiction": [
+          "subnational"
+        ],
+        "UNFCCC Pillar": [
+          "Mitigation"
+        ],
+        "Topic": [
+          "Buildings, Cities & Urban Systems"
+        ],
+        "Subtopic": [
+          "Building energy efficiency and electrification",
+          "Net-zero construction and resilient building design"
+        ],
+        "Commentary": "Achieving net-zero building emissions by 2040 can serve as an interim milestone toward fully zero-carbon buildings by 2050. To ensure an equitable transition, building performance standards should be accompanied by funding and technical assistance, particularly for schools, low-income housing, and small businesses. Frontline and marginalized communities should have meaningful opportunities to participate in policy development and implementation. Tenant protections are also essential to ensure that building upgrades do not lead to displacement or unreasonable rent increases.",
         "Draft Year": "2026",
         "Approval Status": "Approved",
         "Archived": "No",
