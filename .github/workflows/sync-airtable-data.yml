@@ -37,10 +37,14 @@ jobs:
       - name: Detect changes
         id: changes
         run: |
-          git add data.js
-          if git diff --cached --quiet; then
+          # metadata.generatedAt is rewritten on every run, so ignore it:
+          # only a real data change should commit and deploy.
+          strip() { grep -v '"generatedAt"'; }
+          if git cat-file -e HEAD:data.js 2>/dev/null              && diff -q <(git show HEAD:data.js | strip) <(strip < data.js) >/dev/null; then
+            git checkout -- data.js
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
+            git add data.js
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
