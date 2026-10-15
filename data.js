@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-10-14T23:59:29.336Z",
+    "generatedAt": "2026-10-15T16:16:44.643Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -178,6 +178,42 @@ window.NYS_BUILDER_DATA = {
         "Topic": "",
         "Subtopic": "",
         "Draft Year": "",
+        "Approval Status": "Pending",
+        "Archived": "No",
+        "Policies": "",
+        "Edits": ""
+      }
+    },
+    {
+      "id": "6",
+      "airtableId": "recCTacUtAlvVWzPc",
+      "title": "Maryland's Building Energy Performance Standard",
+      "scope": "Domestic",
+      "issueAreas": [
+        "Buildings, Cities & Urban Systems"
+      ],
+      "policyIds": [],
+      "columns": {
+        "Tool Identifier": "6",
+        "Tool Title": "Maryland's Building Energy Performance Standard",
+        "Tool Explanation": "[Maryland's Building Energy Performance Standard](https://www.climatepolicydashboard.org/policies/buildings-efficiency/building-performance-standards) (established by the Climate Solutions Now Act of 2022) serves as an example, requiring existing commercial and multi-family residential buildings larger than 35,000 square feet to reduce direct emissions by 20% by 2030 and achieve net-zero emissions by 2040.",
+        "Scope": [
+          "Domestic"
+        ],
+        "Jurisdiction": [
+          "subnational"
+        ],
+        "UNFCCC Pillar": [
+          "mitigation"
+        ],
+        "Topic": [
+          "Buildings, Cities & Urban Systems"
+        ],
+        "Subtopic": [
+          "Building energy efficiency and electrification",
+          "Net-zero construction and resilient building design"
+        ],
+        "Draft Year": "2026",
         "Approval Status": "Pending",
         "Archived": "No",
         "Policies": "",
