@@ -1666,6 +1666,36 @@ async function load() {
   }
 }
 
+// When the page runs inside an iframe (for example on lcoyusa.com), tell the parent page the
+// content height so it can size the frame, and read back which part of the frame is on screen
+// so fixed overlays (see `html.is-embedded` in styles.css) stay visible.
+function initEmbedMode() {
+  if (window.parent === window) return;
+
+  const root = document.documentElement;
+  root.classList.add('is-embedded');
+
+  let lastHeight = 0;
+  const postHeight = () => {
+    const height = Math.ceil(root.getBoundingClientRect().height);
+    if (!height || height === lastHeight) return;
+    lastHeight = height;
+    window.parent.postMessage({ type: 'nys-builder:height', height }, '*');
+  };
+  new ResizeObserver(postHeight).observe(root);
+
+  window.addEventListener('message', (event) => {
+    if (event.source !== window.parent || event.data?.type !== 'nys-builder:view') return;
+    root.style.setProperty('--embed-view-top', `${Number(event.data.top) || 0}px`);
+    root.style.setProperty('--embed-view-height', `${Number(event.data.height) || 0}px`);
+  });
+
+  window.parent.postMessage({ type: 'nys-builder:ready' }, '*');
+  postHeight();
+}
+
+initEmbedMode();
+
 load().catch((error) => {
   const errorEl = document.createElement('p');
   errorEl.className = 'muted';

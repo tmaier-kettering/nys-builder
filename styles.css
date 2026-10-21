@@ -1351,6 +1351,19 @@ details.control > summary.filter-header + * {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
+/* ── Embedded in an iframe (parent page sizes the frame to the full content height) ── */
+html.is-embedded body {
+  min-height: 0;
+}
+
+/* Fixed overlays would cover the whole tall frame, so confine them to the part the visitor sees. */
+html.is-embedded .related-side-panel,
+html.is-embedded .pdf-export-modal {
+  inset: auto 0;
+  top: var(--embed-view-top, 0px);
+  height: var(--embed-view-height, 100vh);
+}
+
 /* ── PDF export mode modal ───────────────────────────────────── */
 .pdf-export-modal {
   position: fixed;
