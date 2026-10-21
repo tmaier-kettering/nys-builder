@@ -49,6 +49,7 @@ window.PDF_CONFIG = {
     bandAColor: '#e2f5f2', // Background color for first/odd band within a section (light teal tint).
     bandBColor: '#a9e0a0', // Background color for second/even band within a section (light green tint).
     bandInsetX: 6, // How far the band extends beyond text on left and right.
+    bandInsetY: 6, // How far the band extends above and below the text. Matches bandInsetX.
     bandWidthExtra: 12, // Extra total width added to band rectangle (usually 2 * bandInsetX).
     bandOffsetY: 0, // Vertical offset for band rectangle start (positive moves up).
     bandHeightExtra: 0, // Extra height added to band rectangle (positive makes band taller).
@@ -84,6 +85,7 @@ window.PDF_CONFIG = {
   },
 
   // ---- Typography scale ----
+  headingSpacingBefore: 10, // Space above each section header (e.g. "International - Mitigation"), except at the top of a page.
   typography: {
     lineHeightMultiplier: 1.15, // Line height = fontSize * this multiplier.
     paragraphSpacing: 6, // Vertical gap between text blocks.

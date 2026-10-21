@@ -1090,6 +1090,7 @@ async function downloadPdf() {
         width = textWidth - indent,
         justify = false,
         spacingAfter = 4,
+        spacingBefore = 0,
         underline = false
       } = options;
       const typeSpec = PDF_BRAND_TYPE[style] || PDF_BRAND_TYPE.normal;
@@ -1097,8 +1098,10 @@ async function downloadPdf() {
       const font = getFont(typeSpec.style);
       const words = splitWords(text);
       const lines = words.length ? buildWrappedWordLines(words, font, fontSize, width) : [[]];
-      const neededHeight = Math.max(lines.length, 1) * lineHeight(fontSize) + spacingAfter;
+      const neededHeight = Math.max(lines.length, 1) * lineHeight(fontSize) + spacingAfter + spacingBefore;
       ensureSpace(neededHeight);
+      // Skip the extra space at the top of a page, where it would only push content down.
+      if (cursorY < pageHeight - PDF_PAGE_MARGIN) cursorY -= spacingBefore;
       lines.forEach((lineWords, index) => {
         drawWordLine({
           words: lineWords,
@@ -1180,6 +1183,7 @@ async function downloadPdf() {
       const blockPaddingBottom = 10;
       const blockHeight = blockPaddingTop + policyLineCount * lh + commentaryBlockHeight + blockPaddingBottom;
       const bandInsetX = policyBlocksCfg.bandInsetX ?? 6;
+      const bandInsetY = policyBlocksCfg.bandInsetY ?? bandInsetX;
       const bandWidthExtra = policyBlocksCfg.bandWidthExtra ?? 12;
       const bandOffsetY = policyBlocksCfg.bandOffsetY ?? 0;
       const bandHeightExtra = policyBlocksCfg.bandHeightExtra ?? 0;
@@ -1198,8 +1202,8 @@ async function downloadPdf() {
         const lastCommentaryBaseline = firstCommentaryBaseline - (commentaryLines.length - 1) * commentaryLineStep;
         contentBandBottom = lastCommentaryBaseline - commentaryFontSize * 0.28;
       }
-      const blockBottom = contentBandBottom + bandOffsetY;
-      const bandHeight = Math.max(1, policyBandTop - contentBandBottom + bandHeightExtra);
+      const blockBottom = contentBandBottom + bandOffsetY - bandInsetY;
+      const bandHeight = Math.max(1, policyBandTop - contentBandBottom + bandHeightExtra + bandInsetY * 2);
       page.drawRectangle({
         x: PDF_PAGE_MARGIN - bandInsetX,
         y: blockBottom,
@@ -1330,6 +1334,7 @@ async function downloadPdf() {
         writeSimpleWrapped(fullLabel, {
           style: 'heading2',
           color: palette.heading,
+          spacingBefore: _pdfCfg.headingSpacingBefore ?? 10,
           spacingAfter: 6
         });
 
@@ -1410,7 +1415,7 @@ async function downloadPdf() {
         y: tocCursorY,
         size: PDF_TOC_ENTRY_SIZE,
         font: tocNumberFont,
-        color: palette.heading
+        color: palette.body
       });
 
       tocCursorY -= lineHeight(PDF_TOC_ENTRY_SIZE) + 4;

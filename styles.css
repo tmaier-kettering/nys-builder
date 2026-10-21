@@ -788,6 +788,17 @@ footer {
   .cards {
     grid-template-columns: 1fr;
   }
+
+  /* Narrow label column (Policy, Scope, ...) so the value column gets the room. */
+  .field {
+    grid-template-columns: 4.9rem 1fr;
+    column-gap: 0.5rem;
+  }
+
+  .field-label {
+    font-size: 0.74rem;
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 620px) {
@@ -815,7 +826,9 @@ footer {
 
   .main-controls button {
     margin-left: 0;
-    margin-right: 0.5rem;
+    margin-right: 0;
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
