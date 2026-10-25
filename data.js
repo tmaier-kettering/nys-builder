@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-10-25T15:56:15.499Z",
+    "generatedAt": "2026-10-25T16:02:18.167Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -139,52 +139,6 @@ window.NYS_BUILDER_DATA = {
       }
     },
     {
-      "id": "4",
-      "airtableId": "recqdPUYeGWr2uPQI",
-      "title": "Untitled Tool",
-      "scope": "",
-      "issueAreas": [],
-      "policyIds": [],
-      "columns": {
-        "Tool Identifier": "4",
-        "Tool Title": "",
-        "Tool Explanation": "",
-        "Scope": "",
-        "Jurisdiction": "",
-        "UNFCCC Pillar": "",
-        "Topic": "",
-        "Subtopic": "",
-        "Draft Year": "",
-        "Approval Status": "Pending",
-        "Archived": "No",
-        "Policies": "",
-        "Edits": ""
-      }
-    },
-    {
-      "id": "5",
-      "airtableId": "recHuctVlKl8DymXa",
-      "title": "Untitled Tool",
-      "scope": "",
-      "issueAreas": [],
-      "policyIds": [],
-      "columns": {
-        "Tool Identifier": "5",
-        "Tool Title": "",
-        "Tool Explanation": "",
-        "Scope": "",
-        "Jurisdiction": "",
-        "UNFCCC Pillar": "",
-        "Topic": "",
-        "Subtopic": "",
-        "Draft Year": "",
-        "Approval Status": "Pending",
-        "Archived": "No",
-        "Policies": "",
-        "Edits": ""
-      }
-    },
-    {
       "id": "6",
       "airtableId": "recCTacUtAlvVWzPc",
       "title": "Maryland's Building Energy Performance Standard",
@@ -252,7 +206,7 @@ window.NYS_BUILDER_DATA = {
           "Frontline and vulnerable communities"
         ],
         "Draft Year": "2026",
-        "Approval Status": "Pending",
+        "Approval Status": "Approved",
         "Archived": "No",
         "Policies": [
           "19",
@@ -560,7 +514,7 @@ window.NYS_BUILDER_DATA = {
         ],
         "Commentary": "Federal, State, Regional, Local governments, and School boards must establish and fund youth councils (age 35 or younger) that meet with at least twice a quarter with the aforementioned parties to provide feedback on any policies that regards youth or impacts future generations and report a free, publicly available, written statement responding to the feedback generated, acknowledging the feedback, justifying the final decisions, and signed by all participating representatives.",
         "Draft Year": "2026",
-        "Approval Status": "Pending",
+        "Approval Status": "Approved",
         "Archived": "No",
         "Tools": [
           "7"
