@@ -1,6 +1,6 @@
 window.NYS_BUILDER_DATA = {
   "metadata": {
-    "generatedAt": "2026-10-15T16:19:02.503Z",
+    "generatedAt": "2026-10-25T15:56:15.499Z",
     "source": "Airtable",
     "baseId": "appA4oGhgyOzwt8QK",
     "tables": [
@@ -217,6 +217,47 @@ window.NYS_BUILDER_DATA = {
         "Approval Status": "Pending",
         "Archived": "No",
         "Policies": "",
+        "Edits": ""
+      }
+    },
+    {
+      "id": "7",
+      "airtableId": "recvTIIagHMhHPxlu",
+      "title": "Honolulu's Resilience Office",
+      "scope": "Domestic",
+      "issueAreas": [
+        "Climate Justice & Equity"
+      ],
+      "policyIds": [
+        "19",
+        "2"
+      ],
+      "columns": {
+        "Tool Identifier": "7",
+        "Tool Title": "Honolulu's Resilience Office",
+        "Tool Explanation": "Honolulu has a [Resilience Office](https://www.resilientoahu.org/equity#tools), which addresses green gentrification, toxic site placement, climate displacement, and unequal access to clean air, water, and green jobs.",
+        "Scope": [
+          "Domestic"
+        ],
+        "Jurisdiction": [
+          "subnational"
+        ],
+        "UNFCCC Pillar": [
+          "action for climate empowerment"
+        ],
+        "Topic": [
+          "Climate Justice & Equity"
+        ],
+        "Subtopic": [
+          "Frontline and vulnerable communities"
+        ],
+        "Draft Year": "2026",
+        "Approval Status": "Pending",
+        "Archived": "No",
+        "Policies": [
+          "19",
+          "2"
+        ],
         "Edits": ""
       }
     }
@@ -487,6 +528,47 @@ window.NYS_BUILDER_DATA = {
       }
     },
     {
+      "id": "19",
+      "airtableId": "rec2r3mMTrDiHZ9ew",
+      "policyText": "Ensure marginalized representation (i.e. youth, BIPOC, homeless) in all levels of government through the establishment of advisory boards, designated seats, and other methods of equal status with government representatives; these boards would provide input and feedback throughout the decisionmaking process and hold decisionmakers accountable.",
+      "scope": "Domestic",
+      "type": "",
+      "issueAreas": [
+        "Climate Justice & Equity"
+      ],
+      "commentary": "Federal, State, Regional, Local governments, and School boards must establish and fund youth councils (age 35 or younger) that meet with at least twice a quarter with the aforementioned parties to provide feedback on any policies that regards youth or impacts future generations and report a free, publicly available, written statement responding to the feedback generated, acknowledging the feedback, justifying the final decisions, and signed by all participating representatives.",
+      "toolIds": [
+        "7"
+      ],
+      "columns": {
+        "Policy Identifier": "19",
+        "Policy": "Ensure marginalized representation (i.e. youth, BIPOC, homeless) in all levels of government through the establishment of advisory boards, designated seats, and other methods of equal status with government representatives; these boards would provide input and feedback throughout the decisionmaking process and hold decisionmakers accountable.",
+        "Scope": [
+          "Domestic"
+        ],
+        "Jurisdiction": [
+          "subnational"
+        ],
+        "UNFCCC Pillar": [
+          "Action for Climate Empowerment"
+        ],
+        "Topic": [
+          "Climate Justice & Equity"
+        ],
+        "Subtopic": [
+          "Frontline and vulnerable communities"
+        ],
+        "Commentary": "Federal, State, Regional, Local governments, and School boards must establish and fund youth councils (age 35 or younger) that meet with at least twice a quarter with the aforementioned parties to provide feedback on any policies that regards youth or impacts future generations and report a free, publicly available, written statement responding to the feedback generated, acknowledging the feedback, justifying the final decisions, and signed by all participating representatives.",
+        "Draft Year": "2026",
+        "Approval Status": "Pending",
+        "Archived": "No",
+        "Tools": [
+          "7"
+        ],
+        "Edits": ""
+      }
+    },
+    {
       "id": "2",
       "airtableId": "recnNl9fG6XS8nphK",
       "policyText": "Establish a mandated dialogue for addressing climate refugees at SB64,further calling upon the UNFCCC, in partnership with the SpecialRapporteur on Human Rights and Climate Change, to create a report fromthe dialogue with recommendations on next steps.",
@@ -498,7 +580,8 @@ window.NYS_BUILDER_DATA = {
       "commentary": "the UNFCCC has examples of such plans... Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       "toolIds": [
         "1",
-        "3"
+        "3",
+        "7"
       ],
       "columns": {
         "Policy Identifier": "2",
@@ -525,7 +608,8 @@ window.NYS_BUILDER_DATA = {
         "Archived": "No",
         "Tools": [
           "1",
-          "3"
+          "3",
+          "7"
         ],
         "Edits": ""
       }
